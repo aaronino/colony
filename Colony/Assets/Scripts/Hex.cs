@@ -13,6 +13,7 @@ public class Hex : MonoBehaviour {
         GetComponent<SpriteRenderer>().color = backColor;   
         Row = row;
         Column = column;
+        gameObject.name = "Hex " + row + "-" + column;
     }
 
 

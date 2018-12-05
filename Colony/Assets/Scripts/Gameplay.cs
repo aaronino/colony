@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class Gameplay : MonoBehaviour {
 
-    [SerializeField] HexMaster MasterHex;
+    [SerializeField] HexMaster HexMast;
     
 
 	// Use this for initialization
 	void Start () {
-        MasterHex.InitializeHexGrid();
+        HexMast.InitializeHexGrid();
 	}
 	
 	// Update is called once per frame

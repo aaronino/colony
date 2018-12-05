@@ -39,7 +39,7 @@ public class HexMaster : MonoBehaviour {
     public Vector3 CalculatePosition(int x, int y)
     {
         // eve rows need + .5 x spacing
-        float extraX = y % 2 == 0 ? XSpacing * .5f : 0;
+        float extraX = y % 2 == 1 ? XSpacing * .5f : 0;
 
         return new Vector3(
             TopLeftPosition.x + (x * XSpacing) + extraX,
