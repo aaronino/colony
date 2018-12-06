@@ -12,8 +12,17 @@ public class Gameplay : MonoBehaviour {
 	void Start () {
         MasterHex.InitializeHexGrid();
         MasterAnt.InitializeAnts();
-        InvokeRepeating("CoreGameLoop", 0f, CoreGameLoopFrequency);
+        StartLoop(CoreGameLoopFrequency);
+        
 	}
+
+    public void StartLoop(float frequency)
+    {
+        CancelInvoke();
+        if (frequency < .1f) frequency = .1f;
+        CoreGameLoopFrequency = frequency;
+        InvokeRepeating("CoreGameLoop", 0f, frequency);
+    }
 	
     /// <summary>
     /// This is the primary place for action to take place
@@ -21,6 +30,26 @@ public class Gameplay : MonoBehaviour {
     void CoreGameLoop()
     {
         MasterAnt.MoveAllAnts();
+    }
+
+    public void SpeedUp()
+    {
+        StartLoop(CoreGameLoopFrequency - .1f);
+    }
+
+    public void SlowDown()
+    {
+        StartLoop(CoreGameLoopFrequency + .1f);
+    }
+
+    public void Pause()
+    {
+        CancelInvoke();
+    }
+
+    public void Play()
+    {
+        StartLoop(CoreGameLoopFrequency);
     }
 
 	// Update is called once per frame

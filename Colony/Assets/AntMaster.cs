@@ -35,13 +35,13 @@ public class AntMaster : MonoBehaviour {
         foreach(GameObject ant in CurrentAnts) {
             int curX = ant.GetComponent<AntPosition>().X;
             int curY = ant.GetComponent<AntPosition>().Y;
-            var o = Master.MasterHex.GetNeighboringHexInfo(curX, curY);
+            var info = Master.MasterHex.GetNeighboringHexInfo(curX, curY).Where(o => !o.HasAnt).ToList();
 //            Debug.Log("Trying to move ant at " + curX + ", " + curY + ", there are " + o.Count + " neighboring hexes.");
-            if (o.Count == 0) {
+            if (info.Count == 0) {
                 Debug.Log("No neighbors found");
             }
             else {
-                var newXY = o[Random.Range(0, o.Count)];
+                var newXY = info[Random.Range(0, info.Count)];
  //               Debug.Log("We are moving to " + newXY.X + ", " + newXY.Y);
                 MoveAnt(ant, System.Convert.ToInt32(newXY.X), System.Convert.ToInt32(newXY.Y));
             }
