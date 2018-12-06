@@ -29,7 +29,7 @@ public class Gameplay : MonoBehaviour {
     /// </summary>
     void CoreGameLoop()
     {
-        MasterAnt.MoveAllAnts();
+        MasterAnt.AllAntsAct();
     }
 
     public void SpeedUp()

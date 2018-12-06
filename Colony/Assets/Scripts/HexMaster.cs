@@ -107,7 +107,7 @@ public class HexMaster : MonoBehaviour {
     /// <param name="y"></param>
     /// <param name="pathableOnly"></param>
     /// <returns></returns>
-    public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = true)
+    public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = false)
     {
         List<Vector2> coord = GetNeighboringHexCoordinates(x, y, pathableOnly);
         return coord.Select(o => GetHexInfoAt(Convert.ToInt32(o.x), Convert.ToInt32(o.y))).ToList();
@@ -119,7 +119,7 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    private List<Vector2> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = true)
+    private List<Vector2> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = false)
     {
         // todo: bounds checking
         List<Vector2> neighbors;

@@ -30,9 +30,14 @@ public class AntMaster : MonoBehaviour {
         CreateAntAt(20, 20);
     }
 
-    public void MoveAllAnts()
+    
+    public void AllAntsAct()
     {
         foreach(GameObject ant in CurrentAnts) {
+            // Make something like this work for real
+            // ant.GetComponent<JoeyScriptName>().Act(ant, Master.MasterHex.GetHexInfoAt(curX, curY), Master.MasterHex.GetNeighboringHexInfo(curX, curY));
+            
+            // DEBUG stuff, just moves everything around
             int curX = ant.GetComponent<AntPosition>().X;
             int curY = ant.GetComponent<AntPosition>().Y;
             var info = Master.MasterHex.GetNeighboringHexInfo(curX, curY).Where(o => !o.HasAnt).ToList();
