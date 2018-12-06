@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Hex : MonoBehaviour {
 
-    [SerializeField] public bool Pathable;
+    [SerializeField] public bool NeverPathable;
     [SerializeField] public int Row;
     [SerializeField] public int Column;
 
@@ -14,6 +14,7 @@ public class Hex : MonoBehaviour {
         Row = row;
         Column = column;
         gameObject.name = "Hex " + row + "-" + column;
+        NeverPathable = false;
     }
 
 
