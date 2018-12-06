@@ -13,9 +13,9 @@ public class HexMaster : MonoBehaviour {
     [SerializeField] float YSpacing;
     [SerializeField] GameObject HexTemplate;
     [SerializeField] public GameObject GridParent;
+    [SerializeField] public Gameplay Master;
     
     public List<GameObject> CurrentHexGrid;
-    
 
     // temp color helpers
     [SerializeField] public Color UnpathableColor;
@@ -30,7 +30,6 @@ public class HexMaster : MonoBehaviour {
         if (CurrentHexGrid != null) CurrentHexGrid.ForEach(o => Destroy(o));
 
         CurrentHexGrid = new List<GameObject>();
-        
 
         for (int y = 0; y < GridHeight; y++) {
             for (int x = 0; x < GridWidth; x++) {
@@ -71,11 +70,22 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    public GameObject GetHexAt(int x, int y)
+    private GameObject GetHexAt(int x, int y)
     {
         // Note - change the createhexat color value to see which hexes are created as a result of ants wandering. interesting!
-        return CurrentHexGrid.FirstOrDefault(o => (o.GetComponent<Hex>().Row == y) && (o.GetComponent<Hex>().Column == x)) ?? CreateHexAt(x, y, DefaultColor);
-        
+        return CurrentHexGrid.FirstOrDefault(o => (o.GetComponent<Hex>().Row == y) && (o.GetComponent<Hex>().Column == x)) ?? CreateHexAt(x, y, DefaultColor);   
+    }
+
+    /// <summary>
+    /// Returns hex info at a particular location
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public HexInfo GetHexInfoAt(int x, int y)
+    {
+        // todo: this needs optimizing at some point, currently we just always create a new hex info
+        return new HexInfo(x, y, false, Master.MasterAnt.CheckForAnt(x, y));
     }
 
     public Vector2 CalculatePosition(int x, int y)
@@ -97,10 +107,10 @@ public class HexMaster : MonoBehaviour {
     /// <param name="y"></param>
     /// <param name="pathableOnly"></param>
     /// <returns></returns>
-    public List<Hex> GetNeighboringHexes(int x, int y, bool pathableOnly = true)
+    public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = true)
     {
         List<Vector2> coord = GetNeighboringHexCoordinates(x, y, pathableOnly);
-        return coord.Select(o => GetHexAt(Convert.ToInt32(o.x), Convert.ToInt32(o.y)).GetComponent<Hex>()).ToList();
+        return coord.Select(o => GetHexInfoAt(Convert.ToInt32(o.x), Convert.ToInt32(o.y))).ToList();
     }
 
     /// <summary>
@@ -109,7 +119,7 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    public List<Vector2> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = true)
+    private List<Vector2> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = true)
     {
         // todo: bounds checking
         List<Vector2> neighbors;

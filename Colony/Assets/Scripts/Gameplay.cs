@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class Gameplay : MonoBehaviour {
 
-    [SerializeField] HexMaster HexMast;
-    [SerializeField] AntMaster AntMast;
+    [SerializeField] public HexMaster MasterHex;
+    [SerializeField] public AntMaster MasterAnt;
     [SerializeField] float CoreGameLoopFrequency;
 
 	// Use this for initialization
 	void Start () {
-        HexMast.InitializeHexGrid();
-        AntMast.InitializeAnts();
+        MasterHex.InitializeHexGrid();
+        MasterAnt.InitializeAnts();
         InvokeRepeating("CoreGameLoop", 0f, CoreGameLoopFrequency);
 	}
 	
@@ -20,7 +20,7 @@ public class Gameplay : MonoBehaviour {
     /// </summary>
     void CoreGameLoop()
     {
-        AntMast.MoveAllAnts();
+        MasterAnt.MoveAllAnts();
     }
 
 	// Update is called once per frame
