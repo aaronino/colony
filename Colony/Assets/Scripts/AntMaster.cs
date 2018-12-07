@@ -6,63 +6,213 @@ using System.Linq;
 public class AntMaster : MonoBehaviour {
 
     [SerializeField] GameObject AntTemplate;
+    [SerializeField] GameObject AntHillTemplate;
     [SerializeField] Gameplay Master;
-    public List<GameObject> CurrentAnts;
 
-    public GameObject CreateAntAt(int x, int y)
+    [SerializeField] int FoodStored;
+    [SerializeField] int Population;
+    [SerializeField] int IdleOccupancy;
+    [SerializeField] int RestingOccupany;
+    [SerializeField] Vector2Int ColonyLocation;
+
+    public GameObject AntHill;
+    private List<HexInfo> ColonyEntrance;
+    public List<AntInfo> CurrentAnts;
+
+    public GameObject CreateAntAt(Vector2Int coords)
     {
+        int x = coords.x;
+        int y = coords.y;
+
         GameObject o = Instantiate(AntTemplate, Master.MasterHex.CalculatePosition(x, y), Quaternion.identity, Master.MasterHex.GridParent.transform);
-        o.GetComponent<AntPosition>().InitializeAnt(x, y);
-        CurrentAnts.Add(o);
+        AntInfo ant = o.GetComponent<AntInfo>();
+        ant.InitializeAnt(o, ColonyLocation, Master.GameTurn);
+        CurrentAnts.Add(ant);
+
+        var antHex = Master.MasterHex.GetHexInfoAt(coords);
+        MoveAnt(ant, antHex);
+        return o;
+    }
+
+    public GameObject CreateAntHillAt(Vector2Int coords)
+    {
+        GameObject o = Instantiate(AntHillTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
+
+        var hillHex = Master.MasterHex.GetHexInfoAt(coords);
+
+        hillHex.IsColony = true;
+
         return o;
     }
 
     public void InitializeAnts()
     {
-        CurrentAnts = new List<GameObject>();
-        CreateAntAt(5, 5);
-        CreateAntAt(10, 10);
+        CurrentAnts = new List<AntInfo>();
 
-        CreateAntAt(15, 15);
-        CreateAntAt(25, 25);
-        CreateAntAt(35, 35);
-        CreateAntAt(20, 20);
-        CreateAntAt(20, 20);
+        AntHill = CreateAntHillAt(ColonyLocation);
+        ColonyEntrance = new List<HexInfo>();
+
+        ColonyEntrance = Master.MasterHex.GetNeighboringHexInfo(ColonyLocation.x, ColonyLocation.y, true);
     }
 
-    
-    public void AllAntsAct()
+    public void ColonyAct()
     {
-        foreach(GameObject ant in CurrentAnts) {
-            // Make something like this work for real
-            // ant.GetComponent<JoeyScriptName>().Act(ant, Master.MasterHex.GetHexInfoAt(curX, curY), Master.MasterHex.GetNeighboringHexInfo(curX, curY));
-            
-            // DEBUG stuff, just moves everything around
-            int curX = ant.GetComponent<AntPosition>().X;
-            int curY = ant.GetComponent<AntPosition>().Y;
-            var info = Master.MasterHex.GetNeighboringHexInfo(curX, curY).Where(o => !o.HasAnt).ToList();
-//            Debug.Log("Trying to move ant at " + curX + ", " + curY + ", there are " + o.Count + " neighboring hexes.");
-            if (info.Count == 0) {
-                Debug.Log("No neighbors found");
-            }
-            else {
-                var newXY = info[Random.Range(0, info.Count)];
- //               Debug.Log("We are moving to " + newXY.X + ", " + newXY.Y);
-                MoveAnt(ant, System.Convert.ToInt32(newXY.X), System.Convert.ToInt32(newXY.Y));
-            }
+        BirthAnts(); 
+
+        SpawnAnts();
+
+        RestAnts();
+    }
+
+    private void SpawnAnts()
+    {
+        // spawn ants
+        while (IdleOccupancy > 0 && ColonyEntrance.Any(x => !x.HasAnt))
+        {
+            CreateAntAt(ColonyEntrance.First(x => !x.HasAnt).Coordinates);
+            IdleOccupancy--;
         }
     }
 
-    public void MoveAnt(GameObject o, int x, int y) 
+    private void BirthAnts()
     {
-        var ant = o.GetComponent<AntPosition>();
-        o.transform.position = Master.MasterHex.CalculatePosition(x, y);
-        ant.X = x;
-        ant.Y = y;
+        // birth new ants
+        if (FoodStored > Population)
+        {
+            FoodStored--;
+            Population++;
+            IdleOccupancy++;
+        }
     }
 
-    public bool CheckForAnt(int x, int y)
+    private void RestAnts()
     {
-        return CurrentAnts.Where(o => (o.GetComponent<AntPosition>().X == x && o.GetComponent<AntPosition>().Y == y)).Count() > 0;
+        // rest ants by feeding them
+        FoodStored -= RestingOccupany;
+        if (FoodStored < 0)
+        {
+            // not enough food, kill starved ants
+            RestingOccupany += FoodStored; 
+            Population += FoodStored;
+            FoodStored = 0;
+        }
+
+        IdleOccupancy += RestingOccupany;
+        RestingOccupany = 0;
+    }
+
+    public void AllAntsAct()
+    {
+        int readyAnts = CurrentAnts.Count(x => x.LastTurn != Master.GameTurn);
+
+        int prevReadyAnts = 0;
+
+        while (readyAnts != prevReadyAnts)
+        {
+            prevReadyAnts = readyAnts;
+
+            foreach (var ant in CurrentAnts.Where(x => x.LastTurn != Master.GameTurn))
+            {
+                AntAct(ant);
+            }
+
+            readyAnts = CurrentAnts.Count(x => x.LastTurn != Master.GameTurn);
+        }
+    }
+
+    public void KillExhaustedAnts()
+    {
+        List<AntInfo> exhaustedAnts = CurrentAnts.Where(x => x.Energy <= 0).ToList();
+
+        foreach (var ant in exhaustedAnts)
+        {
+            Destroy(ant.Ant);
+            CurrentAnts.Remove(ant);
+            var hex = Master.MasterHex.GetHexInfoAt(ant.Location);
+            hex.HasAnt = false;
+            Population--;
+        }
+    }
+
+    private void AntAct(AntInfo ant)
+    {
+        var adjacentHexes = Master.MasterHex.GetNeighboringHexInfo(ant.Location.x, ant.Location.y, true);
+
+        // DEFEND
+        
+        // REST
+        if (ant.Energy <= ant.MaxEnergy / 2)
+        {
+            if (adjacentHexes.Any(x => x.IsColony))
+            {
+                // made it home! de-spawn
+                Destroy(ant.Ant);
+                CurrentAnts.Remove(ant);
+                var hex = Master.MasterHex.GetHexInfoAt(ant.Location);
+                hex.HasAnt = false;
+                RestingOccupany++;
+            }
+            else
+            {
+                // move towards the colony (this action does not spend energy)
+                var nearColony = adjacentHexes.Where(x => x.IsEmpty && x.NearColony.Distance > 0).OrderBy(x => x.NearColony.Distance).FirstOrDefault();
+                if (nearColony != null)
+                {
+                    MoveAnt(ant, nearColony);
+                    ant.LastTurn = Master.GameTurn;
+                }
+            }
+
+            return; // take no further action if rest is priority
+        }
+
+        // ATTACK
+
+
+        // GATHER
+
+
+        // EXPLORE
+        // move randomly for now
+        var target = adjacentHexes.Where(x => x.IsEmpty).RandomElement();
+        if (target != null)
+        {
+            MoveAnt(ant, target);
+            ant.LastTurn = Master.GameTurn;
+            ant.Energy--;
+        }
+
+
+
+
+
+
+        
+
+    }
+
+    public void MoveAnt(AntInfo ant, HexInfo newLocation)
+    {
+        var oldLocation = Master.MasterHex.GetHexInfoAt(ant.Location);
+
+        oldLocation.HasAnt = false;
+        newLocation.HasAnt = true;
+        ant.Ant.transform.position = Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y);
+        ant.Location = newLocation.Coordinates;
+
+        // chem trails
+        ant.NearColony.Location = oldLocation.Coordinates;
+        ant.NearColony.Distance++;
+
+        if (newLocation.NearColony.Distance == 0 || newLocation.NearColony.Distance > ant.NearColony.Distance)
+        {
+            newLocation.NearColony.Location = oldLocation.Coordinates;
+            newLocation.NearColony.Distance = ant.NearColony.Distance;
+        }
+    }
+
+    public bool CheckForAnt(Vector2Int coords)
+    {
+        return CurrentAnts.Any(x => x.Location == coords);
     }
 }

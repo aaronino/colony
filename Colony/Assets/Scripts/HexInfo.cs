@@ -2,32 +2,46 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 
 public class HexInfo {
-    public int X;
-    public int Y;
+    public Vector2Int Coordinates;
         
     public bool HasFood;
     public bool HasAnt;
     public bool IsColony;
-    
-    public HexInfo(int x, int y, bool hasFood = false, bool hasAnt = false, bool isColony = false)
+
+    // chem trails
+    public ChemInfo NearResource;
+    public ChemInfo NearEnemy;
+    public ChemInfo NearColony;
+
+    // scents
+    public List<ScentInfo> Scents;
+
+    public HexInfo(Vector2Int coords, bool hasFood = false, bool hasAnt = false, bool isColony = false) 
+        : this(coords.x, coords.y, hasFood, hasAnt, isColony)
     {
-        X = x;
-        Y = y;
+    }
+
+    public HexInfo(int x, int y, bool hasFood = false, bool hasAnt = false, bool isColony = false)
+        : this ()
+    {
+        Coordinates = new Vector2Int(x, y);
         HasFood = hasFood;
         HasAnt = hasAnt;
         IsColony = isColony;
     }
 
+    public HexInfo()
+    {
+        Scents = new List<ScentInfo>();
+        NearColony = new ChemInfo();
+    }
+
     public bool IsEmpty {
-        get {
-            if (HasFood || HasAnt || IsColony)
-                return false;
-            else
-                return true;
-        }
+        get { return !HasFood && !HasAnt && !IsColony; }
     }
 
     // Returns an empty HexInfo with coordinates provided

@@ -17,6 +17,8 @@ public class HexMaster : MonoBehaviour {
     
     public List<GameObject> CurrentHexGrid;
 
+    public Dictionary<Vector2Int, HexInfo> HexDataDictionary;
+
     // temp color helpers
     [SerializeField] public Color UnpathableColor;
     [SerializeField] public Color DefaultColor;
@@ -30,6 +32,7 @@ public class HexMaster : MonoBehaviour {
         if (CurrentHexGrid != null) CurrentHexGrid.ForEach(o => Destroy(o));
 
         CurrentHexGrid = new List<GameObject>();
+        HexDataDictionary = new Dictionary<Vector2Int, HexInfo>();
 
         for (int y = 0; y < GridHeight; y++) {
             for (int x = 0; x < GridWidth; x++) {
@@ -50,7 +53,7 @@ public class HexMaster : MonoBehaviour {
         Debug.Log("x " + xs + ", y" + ys);
         int x = System.Convert.ToInt32(xs);
         int y = System.Convert.ToInt32(ys);
-        GameObject o = GetHexAt(x, y);
+        GameObject o = GetHexAt(new Vector2Int(x, y));
         o.GetComponent<Hex>().InitializeHex(HighlightColor, x, y);
     }
 
@@ -70,22 +73,34 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    private GameObject GetHexAt(int x, int y)
+    private GameObject GetHexAt(Vector2Int coords)
     {
         // Note - change the createhexat color value to see which hexes are created as a result of ants wandering. interesting!
-        return CurrentHexGrid.FirstOrDefault(o => (o.GetComponent<Hex>().Row == y) && (o.GetComponent<Hex>().Column == x)) ?? CreateHexAt(x, y, DefaultColor);   
+        return CurrentHexGrid
+                   .FirstOrDefault(o => (o.GetComponent<Hex>().Row == coords.y) 
+                   && (o.GetComponent<Hex>().Column == coords.x)) 
+                   ?? CreateHexAt(coords.x, coords.y, DefaultColor);   
     }
 
     /// <summary>
     /// Returns hex info at a particular location
     /// </summary>
-    /// <param name="x"></param>
-    /// <param name="y"></param>
+    /// <param name="coords"></param>
     /// <returns></returns>
-    public HexInfo GetHexInfoAt(int x, int y)
+    public HexInfo GetHexInfoAt(Vector2Int coords)
     {
-        // todo: this needs optimizing at some point, currently we just always create a new hex info
-        return new HexInfo(x, y, false, Master.MasterAnt.CheckForAnt(x, y));
+        HexInfo info;
+
+        if (HexDataDictionary.TryGetValue(coords, out info))
+        {
+            return info;
+        }
+
+        var hexInfo = new HexInfo(coords);
+
+        HexDataDictionary.Add(coords, hexInfo);
+
+        return hexInfo;
     }
 
     public Vector2 CalculatePosition(int x, int y)
@@ -109,8 +124,8 @@ public class HexMaster : MonoBehaviour {
     /// <returns></returns>
     public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = false)
     {
-        List<Vector2> coord = GetNeighboringHexCoordinates(x, y, pathableOnly);
-        return coord.Select(o => GetHexInfoAt(Convert.ToInt32(o.x), Convert.ToInt32(o.y))).ToList();
+        List<Vector2Int> coord = GetNeighboringHexCoordinates(x, y, pathableOnly);
+        return coord.Select(GetHexInfoAt).ToList();
     }
 
     /// <summary>
@@ -119,34 +134,34 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    private List<Vector2> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = false)
+    private List<Vector2Int> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = false)
     {
         // todo: bounds checking
-        List<Vector2> neighbors;
+        List<Vector2Int> neighbors;
         if (y % 2 == 1) { // odd row
-            neighbors = new List<Vector2>() {
-                new Vector2(x, y - 1),
-                new Vector2(x + 1, y - 1),
-                new Vector2(x - 1, y),
-                new Vector2(x + 1, y),
-                new Vector2(x, y + 1),
-                new Vector2(x + 1, y + 1)
+            neighbors = new List<Vector2Int>() {
+                new Vector2Int(x, y - 1),
+                new Vector2Int(x + 1, y - 1),
+                new Vector2Int(x - 1, y),
+                new Vector2Int(x + 1, y),
+                new Vector2Int(x, y + 1),
+                new Vector2Int(x + 1, y + 1)
             };
         } else {
-            neighbors = new List<Vector2>() {
-                new Vector2(x - 1, y - 1),
-                new Vector2(x, y - 1),
-                new Vector2(x - 1, y),
-                new Vector2(x + 1, y),
-                new Vector2(x - 1, y + 1),
-                new Vector2(x, y + 1)
+            neighbors = new List<Vector2Int>() {
+                new Vector2Int(x - 1, y - 1),
+                new Vector2Int(x, y - 1),
+                new Vector2Int(x - 1, y),
+                new Vector2Int(x + 1, y),
+                new Vector2Int(x - 1, y + 1),
+                new Vector2Int(x, y + 1)
             };
         }
 
         neighbors.RemoveAll(o => o.x < 0 || o.y < 0 || o.x > GridWidth || o.y > GridWidth);
         
         if (pathableOnly) {
-            neighbors.RemoveAll(o => GetHexAt(System.Convert.ToInt32(o.x), System.Convert.ToInt32(o.y)).GetComponent<Hex>().NeverPathable);
+            neighbors.RemoveAll(o => GetHexAt(o).GetComponent<Hex>().NeverPathable);
         } 
         
         return neighbors;

@@ -1847,6 +1847,7 @@ MonoBehaviour:
   MasterHex: {fileID: 749893769}
   MasterAnt: {fileID: 749893770}
   CoreGameLoopFrequency: 0.5
+  GameTurn: 0
 --- !u!4 &749893767
 Transform:
   m_ObjectHideFlags: 0
@@ -1910,7 +1911,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AntTemplate: {fileID: 1749159831934838, guid: d5046c7a6f654c841850d284c267822b,
     type: 2}
+  AntHillTemplate: {fileID: 1955851995163512, guid: 7102807844dcf964ba3434e7ca39c0f7,
+    type: 2}
   Master: {fileID: 749893766}
+  FoodStored: 10
+  Population: 0
+  IdleOccupancy: 0
+  RestingOccupany: 0
+  ColonyLocation: {x: 30, y: 30}
+  AntHill: {fileID: 0}
   CurrentAnts: []
 --- !u!114 &749893771
 MonoBehaviour:

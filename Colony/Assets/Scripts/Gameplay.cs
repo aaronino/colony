@@ -8,12 +8,13 @@ public class Gameplay : MonoBehaviour {
     [SerializeField] public AntMaster MasterAnt;
     [SerializeField] float CoreGameLoopFrequency;
 
+    public long GameTurn;
+
 	// Use this for initialization
 	void Start () {
         MasterHex.InitializeHexGrid();
         MasterAnt.InitializeAnts();
         StartLoop(CoreGameLoopFrequency);
-        
 	}
 
     public void StartLoop(float frequency)
@@ -29,7 +30,17 @@ public class Gameplay : MonoBehaviour {
     /// </summary>
     void CoreGameLoop()
     {
+        GameTurn++;
+
+        // perform colony actions
+        MasterAnt.ColonyAct();
+
+        // propagate scents
+
+        // perform ant actions
         MasterAnt.AllAntsAct();
+
+        MasterAnt.KillExhaustedAnts();
     }
 
     public void SpeedUp()
