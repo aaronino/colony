@@ -6,7 +6,7 @@ public class Gameplay : MonoBehaviour {
 
     [SerializeField] public HexMaster MasterHex;
     [SerializeField] public AntMaster MasterAnt;
-    [SerializeField] float CoreGameLoopFrequency;
+    [SerializeField] public float CoreGameLoopFrequency;
 
     public long GameTurn;
 

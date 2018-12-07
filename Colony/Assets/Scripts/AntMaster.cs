@@ -197,7 +197,15 @@ public class AntMaster : MonoBehaviour {
 
         oldLocation.HasAnt = false;
         newLocation.HasAnt = true;
-        ant.Ant.transform.position = Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y);
+        var newPos = Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y);
+        Hashtable movementOptions = new Hashtable();
+        movementOptions.Add("x", newPos.x);
+        movementOptions.Add("y", newPos.y);
+        movementOptions.Add("time", Master.CoreGameLoopFrequency);
+        movementOptions.Add("easetype", iTween.EaseType.linear);
+
+        iTween.MoveTo(ant.Ant, movementOptions);
+        // ant.Ant.transform.position = Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y);
         ant.Location = newLocation.Coordinates;
 
         // chem trails
