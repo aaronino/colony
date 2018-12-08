@@ -124,7 +124,12 @@ public class HexMaster : MonoBehaviour {
     /// <returns></returns>
     public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = false)
     {
-        List<Vector2Int> coord = GetNeighboringHexCoordinates(x, y, pathableOnly);
+        return GetRadiusHexInfo(x, y, 1, pathableOnly);
+    }
+
+    public List<HexInfo> GetRadiusHexInfo(int x, int y, int radius, bool pathableOnly = false)
+    {
+        List<Vector2Int> coord = GetNeighboringHexCoordinates(x, y, radius, pathableOnly);
         return coord.Select(GetHexInfoAt).ToList();
     }
 
@@ -134,28 +139,55 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    private List<Vector2Int> GetNeighboringHexCoordinates(int x, int y, bool pathableOnly = false)
+    private List<Vector2Int> GetNeighboringHexCoordinates(int x, int y, int radius, bool pathableOnly = false)
     {
-        // todo: bounds checking
+        // All values for odd rows, offset is -1 on even rows where marked
+        // Neighbors with radius 1 = 6
+        // y - 1 = 2 | x, x + 1 (offset)
+        // y = 2     | x -1, x + 1
+        // Neighbors with radius 2 = 12
+        // y - 2 = 3 | (x -1, x, x + 1)
+        // y - 1 = 2 | (x - 1, x + 2) (offset)
+        // y  = 2    | (x -2, x + 2)
+        // Neighbors with radius 3 = 18
+        // y - 3 = 4 | x - 1, x, x + 1, x + 2 (offset)
+        // y - 2 = 2 | x - 2, x + 2
+        // y - 1 = 2 | x - 2, x + 3 (offset)
+        // y = 2     | x - 3, x + 3
+        // + 2 + 2 + 4
+
         List<Vector2Int> neighbors;
-        if (y % 2 == 1) { // odd row
+        int offset = (y % 2 == 1) ? 0 : 1;
+        // offset some values by 1
+        if (radius == 1) {
             neighbors = new List<Vector2Int>() {
-                new Vector2Int(x, y - 1),
-                new Vector2Int(x + 1, y - 1),
+                new Vector2Int(x - offset, y - 1),
+                new Vector2Int(x + 1 - offset, y - 1),
                 new Vector2Int(x - 1, y),
                 new Vector2Int(x + 1, y),
-                new Vector2Int(x, y + 1),
-                new Vector2Int(x + 1, y + 1)
-            };
-        } else {
+                new Vector2Int(x - offset, y + 1),
+                new Vector2Int(x + 1 - offset, y + 1)
+                };
+        }
+        else if (radius == 2) {
             neighbors = new List<Vector2Int>() {
-                new Vector2Int(x - 1, y - 1),
-                new Vector2Int(x, y - 1),
-                new Vector2Int(x - 1, y),
-                new Vector2Int(x + 1, y),
-                new Vector2Int(x - 1, y + 1),
-                new Vector2Int(x, y + 1)
-            };
+                new Vector2Int(x - 1, y - 2),
+                new Vector2Int(x, y - 2),
+                new Vector2Int(x + 1, y - 2),
+                new Vector2Int(x - 1 - offset, y - 1),
+                new Vector2Int(x + 2 - offset, y - 1),
+                new Vector2Int(x - 2, y),
+                new Vector2Int(x + 2, y),
+                new Vector2Int(x - 1, y + 2),
+                new Vector2Int(x, y + 2),
+                new Vector2Int(x + 1, y + 2),
+                new Vector2Int(x - 1 - offset, y + 1),
+                new Vector2Int(x + 2 - offset, y + 1),
+                };
+        }
+        else {
+            Debug.LogError("Cant determine radius higher than 2");
+            neighbors = new List<Vector2Int>();
         }
 
         neighbors.RemoveAll(o => o.x < 0 || o.y < 0 || o.x > GridWidth || o.y > GridWidth);
