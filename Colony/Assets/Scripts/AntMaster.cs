@@ -19,6 +19,7 @@ public class AntMaster : MonoBehaviour {
     public GameObject AntHill;
     private List<HexInfo> ColonyEntrance;
     public List<AntInfo> CurrentAnts;
+    public List<AntInfo> DespawnAnts;
 
     public GameObject CreateAntAt(Vector2Int coords)
     {
@@ -49,6 +50,7 @@ public class AntMaster : MonoBehaviour {
     public void InitializeAnts()
     {
         CurrentAnts = new List<AntInfo>();
+        DespawnAnts = new List<AntInfo>();
 
         AntHill = CreateAntHillAt(ColonyLocation);
         ColonyEntrance = new List<HexInfo>();
@@ -117,6 +119,14 @@ public class AntMaster : MonoBehaviour {
                 AntAct(ant);
             }
 
+            foreach (var ant in DespawnAnts)
+            {
+                Destroy(ant.Ant);
+                CurrentAnts.Remove(ant);
+                var hex = Master.MasterHex.GetHexInfoAt(ant.Location);
+                hex.HasAnt = false;
+            }
+
             readyAnts = CurrentAnts.Count(x => x.LastTurn != Master.GameTurn);
         }
     }
@@ -147,10 +157,7 @@ public class AntMaster : MonoBehaviour {
             if (adjacentHexes.Any(x => x.IsColony))
             {
                 // made it home! de-spawn
-                Destroy(ant.Ant);
-                CurrentAnts.Remove(ant);
-                var hex = Master.MasterHex.GetHexInfoAt(ant.Location);
-                hex.HasAnt = false;
+                DespawnAnts.Add(ant);
                 RestingOccupany++;
             }
             else

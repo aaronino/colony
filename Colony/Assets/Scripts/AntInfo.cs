@@ -19,8 +19,8 @@ public class AntInfo : MonoBehaviour {
         Ant = ant;
         Location = coords;
         LastTurn = turn;
-        MaxEnergy = 50;
-        Energy = 50;
+        MaxEnergy = 100;
+        Energy = 100;
         NearColony = new ChemInfo() {Distance = 0, Location = coords };
     }
 }
