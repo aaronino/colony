@@ -124,13 +124,12 @@ public class HexMaster : MonoBehaviour {
     /// <returns></returns>
     public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = false)
     {
-        return GetRadiusHexInfo(x, y, 1, pathableOnly);
+        return GetNeighboringHexCoordinates(x, y, 1, pathableOnly).Select(GetHexInfoAt).ToList();
     }
 
-    public List<HexInfo> GetRadiusHexInfo(int x, int y, int radius, bool pathableOnly = false)
+    public List<HexInfo> GetNeighborHexInfoRadius2(int x, int y, bool pathableOnly = false)
     {
-        List<Vector2Int> coord = GetNeighboringHexCoordinates(x, y, radius, pathableOnly);
-        return coord.Select(GetHexInfoAt).ToList();
+        return GetNeighboringHexCoordinates(x, y, 2, pathableOnly).Select(GetHexInfoAt).ToList();
     }
 
     /// <summary>
