@@ -1895,7 +1895,7 @@ MonoBehaviour:
   CurrentHexGrid: []
   UnpathableColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   DefaultColor: {r: 0.9490196, g: 0.81960785, b: 0.5803922, a: 1}
-  HighlightColor: {r: 0.7490196, g: 0.5882353, b: 0.3882353, a: 1}
+  HighlightColor: {r: 0.5801471, g: 0.8679245, b: 0.36436453, a: 1}
   TextX: {fileID: 848632365}
   TextY: {fileID: 462094995}
 --- !u!114 &749893770
@@ -1921,6 +1921,7 @@ MonoBehaviour:
   ColonyLocation: {x: 30, y: 30}
   AntHill: {fileID: 0}
   CurrentAnts: []
+  DespawnAnts: []
 --- !u!114 &749893771
 MonoBehaviour:
   m_ObjectHideFlags: 0
