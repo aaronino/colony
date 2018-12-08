@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using DG.Tweening;
 
 public class AntMaster : MonoBehaviour {
 
@@ -197,14 +198,8 @@ public class AntMaster : MonoBehaviour {
 
         oldLocation.HasAnt = false;
         newLocation.HasAnt = true;
-        var newPos = Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y);
-        Hashtable movementOptions = new Hashtable();
-        movementOptions.Add("x", newPos.x);
-        movementOptions.Add("y", newPos.y);
-        movementOptions.Add("time", Master.CoreGameLoopFrequency);
-        movementOptions.Add("easetype", iTween.EaseType.linear);
-
-        iTween.MoveTo(ant.Ant, movementOptions);
+        
+        ant.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y), Master.CoreGameLoopFrequency).SetEase(Ease.Linear);
         // ant.Ant.transform.position = Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y);
         ant.Location = newLocation.Coordinates;
 
