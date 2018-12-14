@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.PlayerLoop;
 
 public class Gameplay : MonoBehaviour {
 
     [SerializeField] public HexMaster MasterHex;
     [SerializeField] public AntMaster MasterAnt;
+    [SerializeField] public FoodMaster MasterFood;
     [SerializeField] public float CoreGameLoopFrequency;
 
     public long GameTurn;
@@ -14,7 +16,8 @@ public class Gameplay : MonoBehaviour {
 	void Start () {
         MasterHex.InitializeHexGrid();
         MasterAnt.InitializeAnts();
-        StartLoop(CoreGameLoopFrequency);
+	    MasterFood.InitializeFood();
+	    //StartLoop(CoreGameLoopFrequency);
 	}
 
     public void StartLoop(float frequency)
@@ -24,7 +27,7 @@ public class Gameplay : MonoBehaviour {
         CoreGameLoopFrequency = frequency;
         InvokeRepeating("CoreGameLoop", 0f, frequency);
     }
-	
+
     /// <summary>
     /// This is the primary place for action to take place
     /// </summary>
@@ -32,15 +35,21 @@ public class Gameplay : MonoBehaviour {
     {
         GameTurn++;
 
-        // perform colony actions
-        MasterAnt.ColonyAct();
+        // spawn food
+        MasterFood.SpawnFood();
 
         // propagate scents
+        MasterHex.PropagateScents();
 
         // perform ant actions
         MasterAnt.AllAntsAct();
 
         MasterAnt.KillExhaustedAnts();
+
+        // perform colony actions
+        MasterAnt.ColonyAct();
+
+        //MasterHex.HighlightScents();
     }
 
     public void SpeedUp()
@@ -63,9 +72,13 @@ public class Gameplay : MonoBehaviour {
         StartLoop(CoreGameLoopFrequency);
     }
 
-	// Update is called once per frame
-	void Update () {
-		
-	}
-    
+    public void Next()
+    {
+        CoreGameLoop();
+    }
+
+    // Update is called once per frame
+    void Update ()
+    {
+    }
 }

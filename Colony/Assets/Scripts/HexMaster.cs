@@ -45,7 +45,133 @@ public class HexMaster : MonoBehaviour {
         }
     
     }
-    
+
+    public void ClearHex(Vector2Int coords)
+    {
+        var hex = Master.MasterHex.GetHexAt(coords).GetComponent<Hex>();
+        if (hex.NeverPathable)
+        {
+            hex.NeverPathable = false;
+            hex.ChangeColor(DefaultColor);
+        }
+    }
+
+    public void PropagateScents()
+    {
+        // first push new scents from objects (ants, food, etc)
+        var food = HexDataDictionary.Where(x => x.Value.HasFoodStack).Select(x => x.Value);
+
+        foreach (var hex in food)
+        {
+            hex.Scents.PushScent("food", 8);
+        }
+
+        // next spread scents around the map
+        var scentedHex = HexDataDictionary.Values.FirstOrDefault(x => x.HasActiveScent);
+
+        while (scentedHex != null)
+        {
+            var scent = scentedHex.GetNextActiveScent();
+            while (scent != null)
+            {
+                var adjHexes = GetNeighboringHexInfo(scentedHex.Coordinates.x, scentedHex.Coordinates.y);
+
+                if (scent.Strength > 1)
+                {
+                    foreach (var adjHex in adjHexes)
+                    {
+                        adjHex.Scents.PushScent(scent.Name, scent.Strength - 1);
+                    }
+                }
+
+                if (scent.State == ScentState.Fading)
+                {
+                    scent.Strength--;
+                }
+
+                if (scent.Strength == 0)
+                {
+                    scentedHex.Scents.Remove(scent.Name);
+                }
+
+                scent.State = ScentState.Holding;
+
+                scent = scentedHex.GetNextActiveScent();
+            }
+            scentedHex = HexDataDictionary.Values.FirstOrDefault(x => x.HasActiveScent);
+        }
+
+        // set all scents to fading
+        foreach (var hex in HexDataDictionary.Values)
+        {
+            foreach (var scent in hex.Scents)
+            {
+                scent.Value.State = ScentState.Fading;
+            }
+        }
+    }
+
+    public void HighlightScents()
+    {
+        // show me the scents!
+        var allScents = HexDataDictionary.Values.ToList();
+        foreach (var s in allScents)
+        {
+            var hex = GetHexAt(s.Coordinates).GetComponent<Hex>();
+            var scentColor = hex.NeverPathable ? UnpathableColor : DefaultColor;
+
+            switch (s.Scents.Sum(x => x.Value.Strength))
+            {
+                case 10:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0F);
+                    break;
+                case 9:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.111F);
+                    break;
+                case 8:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.222F);
+                    break;
+                case 7:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.333F);
+                    break;
+                case 6:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.444F);
+                    break;
+                case 5:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.555F);
+                    break;
+                case 4:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.666F);
+                    break;
+                case 3:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.777F);
+                    break;
+                case 2:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 0.888F);
+                    break;
+                case 1:
+                    scentColor = Color.Lerp(Color.red, Color.yellow, 1F);
+                    break;
+            }
+
+            GameObject o = GetHexAt(s.Coordinates);
+            o.GetComponent<Hex>().ChangeColor(scentColor);
+        }
+    }
+
+    public void RecolorAll()
+    {
+        var allScents = HexDataDictionary.Values.ToList();
+        foreach (var s in allScents)
+        {
+            var hex = GetHexAt(s.Coordinates).GetComponent<Hex>();
+            var color = hex.NeverPathable ? UnpathableColor : DefaultColor;
+
+            GameObject o = GetHexAt(s.Coordinates);
+            o.GetComponent<Hex>().ChangeColor(color);
+        }
+    }
+
     public void HighlightHex()
     {
         string xs = TextX.GetComponentInChildren<UnityEngine.UI.Text>().text;
@@ -53,8 +179,33 @@ public class HexMaster : MonoBehaviour {
         Debug.Log("x " + xs + ", y" + ys);
         int x = System.Convert.ToInt32(xs);
         int y = System.Convert.ToInt32(ys);
-        GameObject o = GetHexAt(new Vector2Int(x, y));
+
+        var coords = new Vector2Int(x, y);
+
+        GameObject o = GetHexAt(coords);
         o.GetComponent<Hex>().InitializeHex(HighlightColor, x, y);
+
+        var info = GetHexInfoAt(coords);
+
+        var scents = info.Scents;
+
+        foreach (var s in scents)
+        {
+            Debug.Log(string.Format("Scent {0}: ({1}) is {2}.", s.Key, s.Value.Strength, s.Value.State));
+        }
+    }
+
+    public void ScentHex()
+    {
+        string xs = TextX.GetComponentInChildren<UnityEngine.UI.Text>().text;
+        string ys = TextY.GetComponentInChildren<UnityEngine.UI.Text>().text;
+        
+        int x = System.Convert.ToInt32(xs);
+        int y = System.Convert.ToInt32(ys);
+
+        var coords = new Vector2Int(x, y);
+
+        Master.MasterFood.CreateFoodStack(coords, 8);
     }
 
     private GameObject CreateHexAt(int x, int y, Color c)

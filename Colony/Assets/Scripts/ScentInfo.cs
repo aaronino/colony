@@ -5,8 +5,8 @@ using System.Text;
 using UnityEngine;
 
 
-public struct ScentInfo {
-    
+public class ScentInfo
+{
     public string Name;
     public int Strength;
     public ScentState State;

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Hex : MonoBehaviour {
 
@@ -10,12 +11,15 @@ public class Hex : MonoBehaviour {
 
     public void InitializeHex(Color backColor, int row, int column)
     {
-        GetComponent<SpriteRenderer>().color = backColor;   
+        GetComponent<SpriteRenderer>().color = backColor;
         Row = row;
         Column = column;
         gameObject.name = "Hex " + row + "-" + column;
         NeverPathable = false;
     }
 
-
+    public void ChangeColor(Color backColor)
+    {
+        GetComponent<SpriteRenderer>().color = backColor;
+    }
 }
