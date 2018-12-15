@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
+using TMPro;
 
 public class Gameplay : MonoBehaviour {
 
@@ -10,6 +11,10 @@ public class Gameplay : MonoBehaviour {
     [SerializeField] public FoodMaster MasterFood;
     [SerializeField] public float CoreGameLoopFrequency;
     [SerializeField] public Camera MainCamera;
+    [SerializeField] public TextMeshProUGUI TurnText;
+    [SerializeField] public TextMeshProUGUI PopulationText;
+    [SerializeField] public TextMeshProUGUI FoodStoredText;
+
     public long GameTurn;
 
 	// Use this for initialization
@@ -17,6 +22,7 @@ public class Gameplay : MonoBehaviour {
         MasterHex.InitializeHexGrid();
         MasterAnt.InitializeAnts();
 	    MasterFood.InitializeFood();
+        TurnText.text = "Turn " + GameTurn;
 	    //StartLoop(CoreGameLoopFrequency);
 	}
 
@@ -34,7 +40,7 @@ public class Gameplay : MonoBehaviour {
     void CoreGameLoop()
     {
         GameTurn++;
-
+        
         // spawn food
         MasterFood.SpawnFood();
 
@@ -50,6 +56,10 @@ public class Gameplay : MonoBehaviour {
         MasterAnt.ColonyAct();
 
         //MasterHex.HighlightScents();
+
+        TurnText.text = "Turn: " + GameTurn;
+        PopulationText.text = "Ants: " + MasterAnt.CurrentAnts.Count;
+        FoodStoredText.text = "Food: " + MasterAnt.FoodStored;
     }
 
     public void SpeedUp()

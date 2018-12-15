@@ -35,6 +35,8 @@ public class HexMaster : MonoBehaviour {
             var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
             var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
             
+            
+            Master.MasterFood.CreateFoodStack(xyPoint, 8);
             // xypoint are the coordinates of the hex that was clicked on. There is no bounds checking
             
         }

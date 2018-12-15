@@ -12,7 +12,7 @@ public class AntMaster : MonoBehaviour {
 
     [SerializeField] Gameplay Master;
 
-    [SerializeField] int FoodStored;
+    [SerializeField] public int FoodStored;
     [SerializeField] int Population;
     [SerializeField] int IdleOccupancy;
     [SerializeField] int RestingOccupany;
