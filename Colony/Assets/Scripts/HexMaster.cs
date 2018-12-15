@@ -6,6 +6,7 @@ using System;
 
 public class HexMaster : MonoBehaviour {
 
+    
     [SerializeField] int GridWidth;
     [SerializeField] int GridHeight;
     [SerializeField] Vector3 TopLeftPosition;
@@ -25,7 +26,34 @@ public class HexMaster : MonoBehaviour {
     [SerializeField] public Color HighlightColor;
     public GameObject TextX;
     public GameObject TextY;
-    
+
+    public void Update()
+    {
+        if (Input.GetMouseButtonDown(0)) {
+            var mousePos = Input.mousePosition;
+            mousePos.z = 10; // select distance = 10 units from the camera
+            var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
+            var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
+            
+            // xypoint are the coordinates of the hex that was clicked on. There is no bounds checking
+            
+        }
+    }
+
+    /// <summary>
+    /// Takes any x y (must be relative to grid parent) and returns the coordinates of the hex they would be on
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public Vector2Int ConvertXYToCoordinates(float x, float y)
+    {
+        int row = (int)Math.Round(y / YSpacing) * -1;
+        if (row % 2 == 1) x -= (XSpacing / 2);
+        return new Vector2Int((int)Math.Round(x / XSpacing), row);
+
+    }
+
     public void InitializeHexGrid()
     {
         // Reset values and destroy old grid

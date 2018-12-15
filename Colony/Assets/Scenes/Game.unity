@@ -1974,6 +1974,7 @@ MonoBehaviour:
   MasterAnt: {fileID: 749893770}
   MasterFood: {fileID: 749893771}
   CoreGameLoopFrequency: 0.5
+  MainCamera: {fileID: 519420031}
   GameTurn: 0
 --- !u!4 &749893767
 Transform:
@@ -2010,6 +2011,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7196598211383a7488cc96de39d6da4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MainCamera: {fileID: 0}
   GridWidth: 74
   GridHeight: 65
   TopLeftPosition: {x: -88, y: 49, z: 0}

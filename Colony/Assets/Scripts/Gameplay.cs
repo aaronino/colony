@@ -9,7 +9,7 @@ public class Gameplay : MonoBehaviour {
     [SerializeField] public AntMaster MasterAnt;
     [SerializeField] public FoodMaster MasterFood;
     [SerializeField] public float CoreGameLoopFrequency;
-
+    [SerializeField] public Camera MainCamera;
     public long GameTurn;
 
 	// Use this for initialization
