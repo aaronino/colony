@@ -10,19 +10,74 @@ public class FoodMaster : MonoBehaviour {
 
     [SerializeField] Gameplay Master;
 
-    public Dictionary<Vector2Int, GameObject> CurrentFood;
-    public Dictionary<Vector2Int, FoodStackInfo> CurrentStacks;
-    public List<FoodStackInfo> DespawnStacks;
+    public int MaxFood = 100;
+    public int MinFood = 50;
+    public int MinDistance = 5;
+    private int _stackScentStrength = 8;
+    
+    public int _pelletScentStrength = 3;
+
+    public int StackScentStrength
+    {
+        get { return _stackScentStrength;}
+        set
+        {
+            if (value >= 0 && value <= 10)
+            {
+                _stackScentStrength = value;
+            }
+        }
+    }
+
+    public int PelletScentStrength
+    {
+        get { return _pelletScentStrength;}
+        set
+        {
+            if (value >= 0 && value <= 10)
+            {
+                _pelletScentStrength = value;
+            }
+        }
+    }
+
+    internal Dictionary<Vector2Int, GameObject> CurrentFood;
+    internal Dictionary<Vector2Int, FoodStackInfo> CurrentStacks;
+    private List<FoodStackInfo> DespawnStacks;
 
     public void InitializeFood()
     {
         CurrentFood = new Dictionary<Vector2Int, GameObject>();
         CurrentStacks = new Dictionary<Vector2Int, FoodStackInfo>();
         DespawnStacks = new List<FoodStackInfo>();
+
+        // spawn initial food near colony
+        var spawnPoint = Master.MasterAnt.ColonyLocation;
+        spawnPoint.x -= 4;
+        spawnPoint.y -= 2;
+        CreateFoodStack(spawnPoint, MinFood);
+    }
+
+    public int GetTotalFood()
+    {
+        return CurrentFood.Count() + CurrentStacks.Sum(x => x.Value.Size);
     }
 
     public void SpawnFood()
     {
+        var foodCount = GetTotalFood();
+
+        if (foodCount < MinFood)
+        {
+            var spawnPoint = Master.MasterHex.GetRandomPoint(0);
+            while (Vector2Int.Distance(spawnPoint, Master.MasterAnt.ColonyLocation) < MinDistance)
+            {
+                spawnPoint = Master.MasterHex.GetRandomPoint(0);
+            }
+            var spawnSize = UnityEngine.Random.Range(1, MaxFood - foodCount);
+            CreateFoodStack(spawnPoint, spawnSize);
+        }
+
         foreach (var stack in CurrentStacks)
         {
             var stackCoords = stack.Key;
@@ -46,6 +101,8 @@ public class FoodMaster : MonoBehaviour {
 
         foreach (var stack in DespawnStacks)
         {
+            var stackHex = Master.MasterHex.GetHexInfoAt(stack.Coordinates);
+            stackHex.HasFoodStack = false;
             CurrentStacks.Remove(stack.Coordinates);
             Destroy(stack.Stack);
         }
@@ -58,7 +115,7 @@ public class FoodMaster : MonoBehaviour {
         GameObject o = Instantiate(FoodPelletTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
 
         var foodHex = Master.MasterHex.GetHexInfoAt(coords);
-        foodHex.HasFood = true;
+        foodHex.HasPellet = true;
 
         CurrentFood.Add(coords,o);
         
@@ -76,13 +133,6 @@ public class FoodMaster : MonoBehaviour {
         var stackHex = Master.MasterHex.GetHexInfoAt(coords);
 
         stackHex.HasFoodStack = true;
-
-        //var pellets = Master.MasterHex.GetNeighboringHexInfo(coords.x, coords.y, true);
-
-        //foreach (var hex in pellets)
-        //{
-        //    CreateFoodPellet(hex.Coordinates);
-        //}
 
         return o;
     }

@@ -19,6 +19,9 @@ public class HexMaster : MonoBehaviour {
     public List<GameObject> CurrentHexGrid;
 
     public Dictionary<Vector2Int, HexInfo> HexDataDictionary;
+    private List<HexInfo> _scentedHexes;
+    public bool _selectingHex;
+    public HexInfo SelectedHex;
 
     // temp color helpers
     [SerializeField] public Color UnpathableColor;
@@ -29,16 +32,34 @@ public class HexMaster : MonoBehaviour {
 
     public void Update()
     {
-        if (Input.GetMouseButtonDown(0)) {
+        if (!_selectingHex && Input.GetMouseButtonDown(0))
+        {
+            _selectingHex = true;
+        }
+        else if (_selectingHex && !Input.GetMouseButtonDown(0))
+        {
+            // select the hex on button release (click)
+            _selectingHex = false;
             var mousePos = Input.mousePosition;
             mousePos.z = 10; // select distance = 10 units from the camera
             var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
-            var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
-            
-            
-            Master.MasterFood.CreateFoodStack(xyPoint, 8);
             // xypoint are the coordinates of the hex that was clicked on. There is no bounds checking
-            
+            var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
+
+            var hex = GetHexInfoAt(xyPoint);
+            if (hex != null)
+            {
+                if (SelectedHex != null)
+                {
+                    HighlightHex(SelectedHex.Coordinates, SelectedHex.IsPathable ? DefaultColor : UnpathableColor);
+                }
+                SelectedHex = hex;
+                Debug.Log(string.Format("Selected hex at {0},{1}.",xyPoint.x, xyPoint.y));
+                Debug.Log(string.Format("Home Distance: {0}", hex.HomeInfo.Distance));
+                Debug.Log(string.Format("Food Distance: {0}", hex.FoodInfo.Distance));
+                Debug.Log(string.Format("Food Scent: {0}: {1}", hex.FoodScent.Strength, hex.FoodScent.State));
+                HighlightHex(hex.Coordinates, HighlightColor);
+            }
         }
     }
 
@@ -63,6 +84,7 @@ public class HexMaster : MonoBehaviour {
 
         CurrentHexGrid = new List<GameObject>();
         HexDataDictionary = new Dictionary<Vector2Int, HexInfo>();
+        _scentedHexes = new List<HexInfo>();
 
         for (int y = 0; y < GridHeight; y++) {
             for (int x = 0; x < GridWidth; x++) {
@@ -88,56 +110,71 @@ public class HexMaster : MonoBehaviour {
 
     public void PropagateScents()
     {
-        // first push new scents from objects (ants, food, etc)
-        var food = HexDataDictionary.Where(x => x.Value.HasFoodStack).Select(x => x.Value);
+        // first push new scents from stacks
+        var stacks = HexDataDictionary.Where(x => x.Value.HasFoodStack).Select(x => x.Value);
 
-        foreach (var hex in food)
+        foreach (var hex in stacks)
         {
-            hex.Scents.PushScent("food", 8);
+            if (hex.FoodScent.Strength == 0)
+            {
+                _scentedHexes.Add(hex);
+            }
+            hex.FoodScent.PushScent("food", Master.MasterFood.StackScentStrength);
+        }
+
+        // then push new scents from pellets
+        var pellets = HexDataDictionary.Where(x => x.Value.HasPellet).Select(x => x.Value);
+
+        foreach (var hex in pellets)
+        {
+            if (hex.FoodScent.Strength == 0)
+            {
+                _scentedHexes.Add(hex);
+            }
+            hex.FoodScent.PushScent("food", Master.MasterFood.PelletScentStrength);
         }
 
         // next spread scents around the map
-        var scentedHex = HexDataDictionary.Values.FirstOrDefault(x => x.HasActiveScent);
+        var scentedHex = _scentedHexes.FirstOrDefault(x => x.HasActiveScent);
 
         while (scentedHex != null)
         {
-            var scent = scentedHex.GetNextActiveScent();
-            while (scent != null)
+            var scent = scentedHex.FoodScent;
+
+            var adjHexes = GetNeighboringHexInfo(scentedHex.Coordinates.x, scentedHex.Coordinates.y);
+
+            if (scent.Strength > 1)
             {
-                var adjHexes = GetNeighboringHexInfo(scentedHex.Coordinates.x, scentedHex.Coordinates.y);
-
-                if (scent.Strength > 1)
+                foreach (var adjHex in adjHexes)
                 {
-                    foreach (var adjHex in adjHexes)
+                    if (adjHex.FoodScent.Strength == 0)
                     {
-                        adjHex.Scents.PushScent(scent.Name, scent.Strength - 1);
+                        _scentedHexes.Add(adjHex);
                     }
+                    adjHex.FoodScent.PushScent(scent.Name, scent.Strength - 1);
                 }
-
-                if (scent.State == ScentState.Fading)
-                {
-                    scent.Strength--;
-                }
-
-                if (scent.Strength == 0)
-                {
-                    scentedHex.Scents.Remove(scent.Name);
-                }
-
-                scent.State = ScentState.Holding;
-
-                scent = scentedHex.GetNextActiveScent();
             }
-            scentedHex = HexDataDictionary.Values.FirstOrDefault(x => x.HasActiveScent);
+
+            if (scent.State == ScentState.Fading)
+            {
+                scent.Strength--;
+            }
+
+            if (scent.Strength == 0)
+            {
+                scentedHex.FoodScent.Name = null;
+                _scentedHexes.Remove(scentedHex);
+            }
+
+            scent.State = ScentState.Holding;
+
+            scentedHex = _scentedHexes.FirstOrDefault(x => x.HasActiveScent);
         }
 
         // set all scents to fading
-        foreach (var hex in HexDataDictionary.Values)
+        foreach (var hex in _scentedHexes)
         {
-            foreach (var scent in hex.Scents)
-            {
-                scent.Value.State = ScentState.Fading;
-            }
+            hex.FoodScent.State = ScentState.Fading;
         }
     }
 
@@ -148,9 +185,11 @@ public class HexMaster : MonoBehaviour {
         foreach (var s in allScents)
         {
             var hex = GetHexAt(s.Coordinates).GetComponent<Hex>();
+            if (hex.NeverPathable)
+                continue;
             var scentColor = hex.NeverPathable ? UnpathableColor : DefaultColor;
 
-            switch (s.Scents.Sum(x => x.Value.Strength))
+            switch (s.FoodScent.Strength)
             {
                 case 10:
                     scentColor = Color.Lerp(Color.red, Color.yellow, 0F);
@@ -202,27 +241,10 @@ public class HexMaster : MonoBehaviour {
         }
     }
 
-    public void HighlightHex()
+    public void HighlightHex(Vector2Int coords, Color color)
     {
-        string xs = TextX.GetComponentInChildren<UnityEngine.UI.Text>().text;
-        string ys = TextY.GetComponentInChildren<UnityEngine.UI.Text>().text;
-        Debug.Log("x " + xs + ", y" + ys);
-        int x = System.Convert.ToInt32(xs);
-        int y = System.Convert.ToInt32(ys);
-
-        var coords = new Vector2Int(x, y);
-
         GameObject o = GetHexAt(coords);
-        o.GetComponent<Hex>().InitializeHex(HighlightColor, x, y);
-
-        var info = GetHexInfoAt(coords);
-
-        var scents = info.Scents;
-
-        foreach (var s in scents)
-        {
-            Debug.Log(string.Format("Scent {0}: ({1}) is {2}.", s.Key, s.Value.Strength, s.Value.State));
-        }
+        o.GetComponent<Hex>().ChangeColor(color);
     }
 
     public void ScentHex()
@@ -270,6 +292,12 @@ public class HexMaster : MonoBehaviour {
     /// <returns></returns>
     public HexInfo GetHexInfoAt(Vector2Int coords)
     {
+        // bounds check
+        if (coords.x < 0 || coords.x >= GridWidth)
+            return null;
+        if (coords.y < 0 || coords.y >= GridHeight)
+            return null;
+
         HexInfo info;
 
         if (HexDataDictionary.TryGetValue(coords, out info))
@@ -277,7 +305,12 @@ public class HexMaster : MonoBehaviour {
             return info;
         }
 
-        var hexInfo = new HexInfo(coords);
+        var hex = GetHexAt(coords);
+
+        if (hex == null)
+            return null;
+
+        var hexInfo = new HexInfo(coords) {IsRock = hex.GetComponent<Hex>().NeverPathable};
 
         HexDataDictionary.Add(coords, hexInfo);
 
@@ -305,7 +338,7 @@ public class HexMaster : MonoBehaviour {
     /// <returns></returns>
     public List<HexInfo> GetNeighboringHexInfo(int x, int y, bool pathableOnly = false)
     {
-        return GetNeighboringHexCoordinates(x, y, 1, pathableOnly).Select(GetHexInfoAt).ToList();
+        return GetNeighboringHexCoordinates(x, y, 1, pathableOnly).Select(GetHexInfoAt).Where(z => z != null).ToList();
     }
 
     public List<HexInfo> GetNeighborHexInfoRadius2(int x, int y, bool pathableOnly = false)
@@ -377,5 +410,13 @@ public class HexMaster : MonoBehaviour {
         } 
         
         return neighbors;
-    } 
+    }
+
+    public Vector2Int GetRandomPoint(int padding)
+    {
+        var randPoint = new Vector2Int(UnityEngine.Random.Range(padding, GridWidth - padding),
+            UnityEngine.Random.Range(padding, GridHeight - padding));
+
+        return randPoint;
+    }
 }

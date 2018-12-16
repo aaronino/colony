@@ -2592,6 +2592,7 @@ MonoBehaviour:
   GridParent: {fileID: 1514004415}
   Master: {fileID: 749893766}
   CurrentHexGrid: []
+  _selectingHex: 0
   UnpathableColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   DefaultColor: {r: 0.9490196, g: 0.81960785, b: 0.5803922, a: 1}
   HighlightColor: {r: 0.94294393, g: 0.9716981, b: 0.9212798, a: 1}
@@ -2609,7 +2610,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9b978b44b5420044864d9e45b8b7dc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AntTemplate: {fileID: 1749159831934838, guid: d5046c7a6f654c841850d284c267822b,
+  AntTemplate: {fileID: 7821225294001054288, guid: 914b420caa3e74d4ea6ab8339c7bd7ae,
     type: 3}
   AntHillTemplate: {fileID: 1955851995163512, guid: 7102807844dcf964ba3434e7ca39c0f7,
     type: 3}
@@ -2617,10 +2618,12 @@ MonoBehaviour:
     type: 3}
   Master: {fileID: 749893766}
   FoodStored: 10
-  Population: 10
-  IdleOccupancy: 10
+  Population: 0
+  IdleOccupancy: 0
   RestingOccupany: 0
-  ColonyLocation: {x: 30, y: 30}
+  MaxAntEnergy: 1000
+  ColonyLocation: {x: 0, y: 0}
+  RandomColonyLocation: 1
   CurrentAnts: []
   DespawnAnts: []
 --- !u!114 &749893771
@@ -2640,6 +2643,10 @@ MonoBehaviour:
   FoodStackTemplate: {fileID: 1955851995163512, guid: 78c001ab1f73c91478b76c0567c14a51,
     type: 3}
   Master: {fileID: 749893766}
+  MaxFood: 100
+  MinFood: 50
+  MinDistance: 5
+  _pelletScentStrength: 3
 --- !u!1 &848632365
 GameObject:
   m_ObjectHideFlags: 0

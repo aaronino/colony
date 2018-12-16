@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AntInfo : MonoBehaviour {
+public class AntInfo : MonoBehaviour
+{
 
-    public Vector2Int Location;
+    public HexInfo Hex;
+    public Vector2Int LastLocation;
     public long LastTurn;
     public GameObject Ant;
     public GameObject Food;
@@ -12,17 +14,31 @@ public class AntInfo : MonoBehaviour {
     public int MaxEnergy;
     public bool HasFood;
 
-    public ChemInfo NearFood;
-    public ChemInfo NearColony;
+    public ChemInfo KnownFood;
+    public ChemInfo KnownHome;
 
-    public void InitializeAnt(GameObject ant, Vector2Int coords, long turn)
+    // behaviors
+    public bool AllowedEat;
+    public bool AllowedGather;
+    public bool AllowedExplore;
+
+    public void InitializeAnt(GameObject ant, HexInfo hex, long turn, int energy)
     {
+        AllowedExplore = true;
+        AllowedEat = true;
+        AllowedGather = true;
         Ant = ant;
-        Location = coords;
+        Hex = hex;
+        LastLocation = hex.Coordinates;
         LastTurn = turn;
-        MaxEnergy = 100;
-        Energy = 100;
-        NearColony = new ChemInfo() {Distance = 1, Location = coords };
-        NearFood = new ChemInfo() {Distance = 0, Location = coords};
+        MaxEnergy = energy;
+        Energy = energy;
+        KnownHome = new ChemInfo() {Distance = 1, Location = hex.Coordinates };
+        KnownFood = new ChemInfo() {Distance = 0, Location = hex.Coordinates};
+    }
+
+    public bool IsHungry
+    {
+        get { return Energy < MaxEnergy * .6; }
     }
 }

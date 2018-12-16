@@ -8,18 +8,22 @@ using UnityEngine;
 public class HexInfo {
     public Vector2Int Coordinates;
         
-    public bool HasFood;
+    public bool HasPellet;
     public bool HasFoodStack;
     public bool HasAnt;
     public bool IsColony;
-
+    public bool IsRock;
+    
     // chem trails
-    public ChemInfo NearFood;
-    public ChemInfo NearEnemy;
-    public ChemInfo NearColony;
+    public ChemInfo FoodInfo;
+    public ChemInfo HomeInfo;
+    public long LastTouched;
 
     // scents
-    public Dictionary<string, ScentInfo> Scents;
+    public ScentInfo FoodScent;
+
+    // adjacent
+    public List<Vector2Int> AdjacentSpaces;
 
     public HexInfo(Vector2Int coords) 
         : this(coords.x, coords.y)
@@ -30,59 +34,42 @@ public class HexInfo {
         : this ()
     {
         Coordinates = new Vector2Int(x, y);
+
+        int offset = (y % 2 == 1) ? 0 : 1;
+        AdjacentSpaces = new List<Vector2Int>() {
+            new Vector2Int(x - offset, y - 1),
+            new Vector2Int(x + 1 - offset, y - 1),
+            new Vector2Int(x - 1, y),
+            new Vector2Int(x + 1, y),
+            new Vector2Int(x - offset, y + 1),
+            new Vector2Int(x + 1 - offset, y + 1)
+        };
     }
 
     public HexInfo()
     {
-        Scents = new Dictionary<string, ScentInfo>();
-        NearColony = new ChemInfo();
-        NearFood = new ChemInfo();
-        NearEnemy = new ChemInfo();
+        HomeInfo = new ChemInfo();
+        FoodInfo = new ChemInfo();
+        FoodScent = new ScentInfo();
+    }
+
+    public bool HasFood
+    {
+        get { return HasPellet || HasFoodStack; }
     }
 
     public bool IsEmpty {
         get { return !HasFood && !HasAnt && !IsColony; }
     }
 
+    public bool IsPathable
+    {
+        get { return !IsRock && !IsColony; }
+    }
+
     public bool HasActiveScent
     {
-        get { return Scents.Any(x => x.Value.State != ScentState.Holding); }
-    }
-
-    public ScentInfo GetNextActiveScent()
-    {
-        return Scents.FirstOrDefault(x => x.Value.State != ScentState.Holding).Value;
-    }
-
-    public int GetAntScent()
-    {
-        return Scents.Where(x => x.Value.Name == "ant").Sum(x => x.Value.Strength);
-    }
-
-    public int GetFoodScent()
-    {
-        return Scents.Where(x => x.Value.Name == "food").Sum(x => x.Value.Strength);
-    }
-
-    public int GetInterest()
-    {
-        var interest = 100;
-
-        if (NearColony.Distance > 0)
-        {
-            interest -= 10;
-        }
-        
-        interest -= GetAntScent();
-
-        if (NearFood.Distance > 0)
-        {
-            interest -= 10;
-        }
-
-        interest += GetFoodScent();
-
-        return interest;
+        get { return FoodScent.Strength > 0 && FoodScent.State != ScentState.Holding; }
     }
 
     // Returns an empty HexInfo with coordinates provided

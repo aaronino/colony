@@ -9,4 +9,5 @@ public struct ChemInfo
 {
     public Vector2Int Location;
     public int Distance;
+    public long LastUpdated;
 }

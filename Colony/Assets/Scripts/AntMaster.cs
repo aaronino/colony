@@ -16,7 +16,11 @@ public class AntMaster : MonoBehaviour {
     [SerializeField] int Population;
     [SerializeField] int IdleOccupancy;
     [SerializeField] int RestingOccupany;
-    [SerializeField] Vector2Int ColonyLocation;
+
+    public int MaxAntEnergy = 1000;
+
+    public Vector2Int ColonyLocation;
+    public bool RandomColonyLocation = true;
 
     private List<HexInfo> ColonyEntrance;
     public List<AntInfo> CurrentAnts;
@@ -29,7 +33,9 @@ public class AntMaster : MonoBehaviour {
 
         GameObject o = Instantiate(AntTemplate, Master.MasterHex.CalculatePosition(x, y), Quaternion.identity, Master.MasterHex.GridParent.transform);
         AntInfo ant = o.GetComponent<AntInfo>();
-        ant.InitializeAnt(o, ColonyLocation, Master.GameTurn);
+
+        HexInfo hex = Master.MasterHex.GetHexInfoAt(coords);
+        ant.InitializeAnt(o, hex, Master.GameTurn, MaxAntEnergy);
         CurrentAnts.Add(ant);
 
         var antHex = Master.MasterHex.GetHexInfoAt(coords);
@@ -68,6 +74,9 @@ public class AntMaster : MonoBehaviour {
         DespawnAnts = new List<AntInfo>();
         ColonyEntrance = new List<HexInfo>();
 
+        if (RandomColonyLocation)
+            ColonyLocation = Master.MasterHex.GetRandomPoint(5);
+
         CreateAntHillAt(ColonyLocation);
     }
 
@@ -85,7 +94,7 @@ public class AntMaster : MonoBehaviour {
         // spawn ants
         while (IdleOccupancy > 0 && ColonyEntrance.Any(x => !x.HasAnt))
         {
-            CreateAntAt(ColonyEntrance.First(x => !x.HasAnt).Coordinates);
+            CreateAntAt(ColonyEntrance.Where(x => x.IsPathable && x.IsEmpty).RandomElement().Coordinates);
             IdleOccupancy--;
         }
     }
@@ -136,7 +145,7 @@ public class AntMaster : MonoBehaviour {
             {
                 Destroy(ant.Ant);
                 CurrentAnts.Remove(ant);
-                var hex = Master.MasterHex.GetHexInfoAt(ant.Location);
+                var hex = ant.Hex;
                 hex.HasAnt = false;
             }
             DespawnAnts.Clear();
@@ -153,185 +162,301 @@ public class AntMaster : MonoBehaviour {
         {
             Destroy(ant.Ant);
             CurrentAnts.Remove(ant);
-            var hex = Master.MasterHex.GetHexInfoAt(ant.Location);
+            var hex = ant.Hex;
             hex.HasAnt = false;
+            if (ant.HasFood)
+            {
+                hex.HasPellet = true;
+                Master.MasterFood.CurrentFood.Add(hex.Coordinates, ant.Food);
+            }
             Population--;
         }
     }
 
     private void AntAct(AntInfo ant)
     {
-        var adjacentHexes = Master.MasterHex.GetNeighboringHexInfo(ant.Location.x, ant.Location.y, true);
-        var emptyHexes = adjacentHexes.Where(x => x.IsEmpty);
+        var myHex = ant.Hex;
+        var myLocation = myHex.Coordinates;
+        var adjacentHexes = Master.MasterHex.GetNeighboringHexInfo(myLocation.x, myLocation.y, false);
+        var preferHexes = adjacentHexes.Where(x => x.IsPathable && x.Coordinates != ant.LastLocation).ToList();
+
+        HexInfo moveTarget = null;
+
+        // GENERAL
+        // are we standing next to food?
+        var foodHex = adjacentHexes.FirstOrDefault(x => x.HasPellet);
+        if (foodHex != null)
+        {
+            ant.KnownFood.Distance = 1;
+            ant.KnownFood.Location = foodHex.Coordinates;
+            myHex.FoodInfo.Distance = 1;
+            myHex.FoodInfo.Location = foodHex.Coordinates;
+        }
+
+        // can we drop off food?
+        if (ant.HasFood && adjacentHexes.Any(x => x.IsColony))
+        {
+            // made it home! store the food
+            Destroy(ant.Food);
+            ant.Food = null;
+            ant.HasFood = false;
+            FoodStored++;
+            ant.KnownFood.Distance = 0;
+        }
 
         // EAT
-        if (ant.Energy <= ant.MaxEnergy / 2)
+        if (ant.AllowedEat && ant.IsHungry && FoodStored > 0)
         {
             if (adjacentHexes.Any(x => x.IsColony))
             {
                 // made it home! de-spawn
                 DespawnAnts.Add(ant);
                 RestingOccupany++;
+                return; // this ant is done
             }
-            else
-            {
-                // move towards the colony (this action does not spend energy)
-                var nearColony = adjacentHexes.Where(x => x.IsEmpty && x.NearColony.Distance > 0).OrderBy(x => x.NearColony.Distance).FirstOrDefault();
-                if (nearColony != null)
-                {
-                    MoveAnt(ant, nearColony);
-                    ant.LastTurn = Master.GameTurn;
-                }
-            }
-
-            return; // take no further action if rest is priority
+            moveTarget = FindHomeTarget(preferHexes);
         }
+        
 
         // GATHER
-        if ( !ant.HasFood && adjacentHexes.Any(x => x.HasFood))
+        if (ant.AllowedGather && moveTarget == null)
         {
-            // Pickup the food
-            var foodHex = adjacentHexes.First(x => x.HasFood);
-            var food = Master.MasterFood.CurrentFood[foodHex.Coordinates];
-            Master.MasterFood.CurrentFood.Remove(foodHex.Coordinates);
-
-            ant.Food = food;
-            ant.HasFood = true;
-            ant.NearFood.Distance = 1;
-            ant.NearFood.Location = foodHex.Coordinates;
-
-            foodHex.HasFood = false;
-
-            ant.Food.transform.DOMove(Master.MasterHex.CalculatePosition(ant.Location.x, ant.Location.y), 0F).SetEase(Ease.Linear);
-        }
-
-        if (ant.HasFood)
-        {
-            if (adjacentHexes.Any(x => x.IsColony))
+            // can we pickup food?
+            if (!ant.HasFood && foodHex != null)
             {
-                // made it home! store the food
-                Destroy(ant.Food);
-                ant.Food = null;
-                ant.HasFood = false;
-                FoodStored++;
-            }
-            else
-            {
-                // move towards the colony
-                var nearColony = adjacentHexes.Where(x => x.IsEmpty && x.NearColony.Distance > 0).OrderBy(x => x.NearColony.Distance).FirstOrDefault();
-                if (nearColony != null)
-                {
-                    MoveAnt(ant, nearColony);
-                    ant.LastTurn = Master.GameTurn;
-                }
-                else
-                {
-                    var nextBestHex = adjacentHexes.Where(x => x.IsEmpty).RandomElement();
+                // Pickup the food
+                var food = Master.MasterFood.CurrentFood[foodHex.Coordinates];
+                Master.MasterFood.CurrentFood.Remove(foodHex.Coordinates);
 
-                    if (nextBestHex != null)
-                    {
-                        MoveAnt(ant, nextBestHex);
-                        ant.LastTurn = Master.GameTurn;
-                    }
-                }
+                ant.Food = food;
+                ant.HasFood = true;
+                foodHex.HasPellet = false;
 
-                return;
-            }
-        }
-        
-        if (adjacentHexes.Any(x => x.NearFood.Distance > 0))
-        {
-            var nearFood = adjacentHexes.Where(x => x.IsEmpty && x.NearFood.Distance > 0).OrderBy(x => x.NearFood.Distance).FirstOrDefault();
-            if (nearFood != null)
-            {
-                MoveAnt(ant, nearFood);
-                ant.LastTurn = Master.GameTurn;
-
-                return;
-            }
-        }
-        if (adjacentHexes.Any(x => x.GetFoodScent() > 0))
-        {
-            var scentFood = adjacentHexes.Where(x => x.IsEmpty).OrderByDescending(x => x.GetFoodScent()).FirstOrDefault();
-            if (scentFood != null)
-            {
-                MoveAnt(ant, scentFood);
-                ant.LastTurn = Master.GameTurn;
-                return;
-            }
-        }
-
-        // EXPLORE
-
-        if (emptyHexes.Any())
-        {
-            var targetHexes = emptyHexes.Unexplored();
-
-            if (!targetHexes.Any())
-            {
-                targetHexes = emptyHexes.Scented();
-            }
-
-            if (!targetHexes.Any())
-            {
-                targetHexes = emptyHexes;
+                ant.Food.transform.DOMove(Master.MasterHex.CalculatePosition(ant.Hex.Coordinates.x, ant.Hex.Coordinates.y), 0F)
+                    .SetEase(Ease.Linear);
             }
             
-            var target = targetHexes.RandomElement();
-            if (target != null)
+            // are we carrying food?
+            if (ant.HasFood)
             {
-                MoveAnt(ant, target);
-                ant.LastTurn = Master.GameTurn;
-                ant.Energy--;
+                moveTarget = FindHomeTarget(preferHexes);
+            }
+
+            // are we looking for food?
+            if (!ant.HasFood)
+            {
+                moveTarget = FindFoodTarget(preferHexes);
+
+                if (moveTarget != null && myHex.FoodInfo.Distance > 0 && moveTarget.FoodInfo.Distance > 0
+                && moveTarget.FoodInfo.Distance > myHex.FoodInfo.Distance)
+                {
+                    moveTarget = null; // prefer exploration instead of backtracking for food
+                }
             }
         }
-
-
-    }
-
-    public void MoveAnt(AntInfo ant, HexInfo newLocation)
-    {
-        var oldLocation = Master.MasterHex.GetHexInfoAt(ant.Location);
-
-        oldLocation.HasAnt = false;
-        newLocation.HasAnt = true;
         
-        ant.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y), Master.CoreGameLoopFrequency).SetEase(Ease.Linear);
-        if (ant.Food != null)
+
+        // EXPLORE
+        if (ant.AllowedExplore && moveTarget == null)
         {
-            ant.Food.transform.DOMove(Master.MasterHex.CalculatePosition(newLocation.Coordinates.x, newLocation.Coordinates.y), Master.CoreGameLoopFrequency).SetEase(Ease.Linear);
+            moveTarget = FindSearchTarget(preferHexes);
         }
 
-        ant.Location = newLocation.Coordinates;
+
+        // ANARCHY
+        if (moveTarget == null)
+        {
+            moveTarget = preferHexes.RandomElement();
+        }
+
+        // attempt to move to target
+        if (!MoveToTarget(ant, moveTarget))
+        {
+            // attempt to move near target
+            if (!MoveToNearTarget(ant, moveTarget))
+            {
+                // move far from target
+                if (!MoveToFarTarget(ant, moveTarget))
+                {
+                    // last choice: move back
+                    MoveToLastTarget(ant);
+                }
+            }
+        }
+    }
+
+    private HexInfo FindFoodTarget(List<HexInfo> area)
+    {
+        if (!area.Any())
+            return null;
+
+        // prefer spaces with recent food trails
+        var nearFood = area.Where(x => x.FoodInfo.Distance > 0 && Master.GameTurn - x.FoodInfo.LastUpdated < 50)
+            .OrderBy(x => x.FoodInfo.Distance).FirstOrDefault();
+
+        if (nearFood != null)
+        {
+            // found a space with a food trail
+            return nearFood;
+        }
+
+        // next check spaces with food scent
+        var nearScent = area.Where(x => x.FoodScent.Strength > 0).OrderByDescending(x => x.FoodScent.Strength).FirstOrDefault();
+        
+        return nearScent;
+    }
+
+    private HexInfo FindHomeTarget(List<HexInfo> area)
+    {
+        if (!area.Any())
+            return null;
+
+        // prefer spaces with home trail
+        var nearHome = area.Where(x => x.HomeInfo.Distance > 0).OrderBy(x => x.HomeInfo.Distance).FirstOrDefault();
+        
+        return nearHome;
+    }
+
+    private HexInfo FindSearchTarget(List<HexInfo> area)
+    {
+        if (!area.Any())
+            return null;
+
+        // prefer unexplored scented spaces
+        var unexploredScented = area.Where(x => x.HomeInfo.Distance == 0 && x.FoodScent.Strength > 0).RandomElement();
+
+        if (unexploredScented != null)
+            return unexploredScented;
+
+        // next check for unexplored spaces
+        var unexplored = area.Where(x => x.HomeInfo.Distance == 0).RandomElement();
+
+        if (unexplored != null)
+            return unexplored;
+
+        // finally just search the oldest explored space
+        var oldest = area.OrderBy(x => x.LastTouched).First();
+
+        return oldest;
+    }
+
+    private bool MoveToTarget(AntInfo ant, HexInfo target)
+    {
+        if (target == null)
+            return false;
+
+        if (!target.IsPathable || !target.IsEmpty || ant.Hex == target)
+        {
+            return false;
+        }
+
+        MoveAnt(ant, target);
+
+        return true;
+    }
+
+    private bool MoveToNearTarget(AntInfo ant, HexInfo target)
+    {
+        if (target == null)
+            return false;
+
+        var nearTargets = ant.Hex.AdjacentSpaces.AdjacentTo(target.Coordinates).Where(x => x != ant.LastLocation);
+
+        foreach (var space in nearTargets)
+        {
+            var hex = Master.MasterHex.GetHexInfoAt(space);
+            if (hex == null) continue;
+            if (MoveToTarget(ant, hex))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool MoveToFarTarget(AntInfo ant, HexInfo target)
+    {
+        if (target == null)
+            return false; 
+
+        var farTargets = target.AdjacentSpaces.NonAdjacentTo(target.Coordinates).Where(x => x != ant.LastLocation);
+
+        foreach (var space in farTargets)
+        {
+            var hex = Master.MasterHex.GetHexInfoAt(space);
+            if (hex == null) continue;
+            if (MoveToTarget(ant, hex))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool MoveToLastTarget(AntInfo ant)
+    {
+        var lastTarget = ant.LastLocation;
+
+        if (lastTarget == ant.Hex.Coordinates)
+            return false;
+        
+        var hex = Master.MasterHex.GetHexInfoAt(lastTarget);
+        if (hex == null) return false;
+
+        if (MoveToTarget(ant, hex))
+            return true;
+
+        return false;
+    }
+
+    private void MoveAnt(AntInfo ant, HexInfo hex)
+    {
+        var oldHex = ant.Hex;
+
+        oldHex.HasAnt = false;
+        hex.HasAnt = true;
+        ant.Hex = hex;
+        ant.LastLocation = oldHex.Coordinates;
+
+        // move ant
+        ant.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y), Master.CoreGameLoopFrequency).SetEase(Ease.Linear);
+        
+        // move food if ant is carrying
+        if (ant.Food != null)
+        {
+            ant.Food.transform.DOMove(Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y), Master.CoreGameLoopFrequency).SetEase(Ease.Linear);
+        }
+
+        // uncomment this if you want to see where the ants have been
+        //Master.MasterHex.HighlightHex(hex.Coordinates, Color.green);
+
+        ant.Energy--; // spend energy
+        ant.LastTurn = Master.GameTurn;
 
         // ant knowledge
 
-        ant.NearColony.Location = oldLocation.Coordinates;
-        ant.NearColony.Distance++;
+        ant.KnownHome.Location = oldHex.Coordinates;
+        ant.KnownHome.Distance++;
 
-        if (ant.NearFood.Distance > 0)
+        if (ant.KnownFood.Distance > 0)
         {
-            ant.NearFood.Location = oldLocation.Coordinates;
-            ant.NearFood.Distance++;
+            ant.KnownFood.Location = oldHex.Coordinates;
+            ant.KnownFood.Distance++;
         }
 
         // chem trails
-
-        if (newLocation.NearColony.Distance == 0 || newLocation.NearColony.Distance > ant.NearColony.Distance)
+        if (hex.HomeInfo.Distance == 0 || hex.HomeInfo.Distance > ant.KnownHome.Distance)
         {
-            newLocation.NearColony.Location = oldLocation.Coordinates;
-            newLocation.NearColony.Distance = ant.NearColony.Distance;
+            hex.HomeInfo.Location = oldHex.Coordinates;
+            hex.HomeInfo.Distance = ant.KnownHome.Distance;
+            hex.HomeInfo.LastUpdated = Master.GameTurn;
         }
 
-        if (newLocation.NearFood.Distance == 0 || newLocation.NearFood.Distance > ant.NearFood.Distance)
+        if (hex.FoodInfo.Distance == 0 || hex.FoodInfo.Distance > ant.KnownFood.Distance)
         {
-            newLocation.NearFood.Location = oldLocation.Coordinates;
-            newLocation.NearFood.Distance = ant.NearFood.Distance;
+            hex.FoodInfo.Location = oldHex.Coordinates;
+            hex.FoodInfo.Distance = ant.KnownFood.Distance;
+            hex.FoodInfo.LastUpdated = Master.GameTurn;
         }
-    }
 
-    public bool CheckForAnt(Vector2Int coords)
-    {
-        return CurrentAnts.Any(x => x.Location == coords);
+        hex.LastTouched = Master.GameTurn;
     }
 }
