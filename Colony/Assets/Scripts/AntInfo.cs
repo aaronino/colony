@@ -21,6 +21,7 @@ public class AntInfo : MonoBehaviour
     public bool AllowedEat;
     public bool AllowedGather;
     public bool AllowedExplore;
+    public bool IsHeld;
 
     public void InitializeAnt(GameObject ant, HexInfo hex, long turn, int energy)
     {

@@ -175,6 +175,9 @@ public class AntMaster : MonoBehaviour {
 
     private void AntAct(AntInfo ant)
     {
+        if (ant.IsHeld)
+            return;
+
         var myHex = ant.Hex;
         var myLocation = myHex.Coordinates;
         var adjacentHexes = Master.MasterHex.GetNeighboringHexInfo(myLocation.x, myLocation.y, false);
@@ -345,7 +348,8 @@ public class AntMaster : MonoBehaviour {
         if (target == null)
             return false;
 
-        if (!target.IsPathable || !target.IsEmpty || ant.Hex == target)
+        if (!target.IsPathable || !target.IsEmpty || ant.Hex == target 
+            || Vector2Int.Distance(ant.Hex.Coordinates, target.Coordinates) > 1)
         {
             return false;
         }
@@ -407,7 +411,7 @@ public class AntMaster : MonoBehaviour {
         return false;
     }
 
-    private void MoveAnt(AntInfo ant, HexInfo hex)
+    public void MoveAnt(AntInfo ant, HexInfo hex)
     {
         var oldHex = ant.Hex;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+using DG.Tweening;
 
 public class HexMaster : MonoBehaviour {
 
@@ -30,23 +31,35 @@ public class HexMaster : MonoBehaviour {
     public GameObject TextX;
     public GameObject TextY;
 
+    private AntInfo _heldAnt;
+
     public void Update()
     {
         if (!_selectingHex && Input.GetMouseButtonDown(0))
         {
             _selectingHex = true;
+
+            if (_heldAnt == null)
+            {
+                var hex = GetHexInfoAtMouse();
+
+                if (hex != null && hex.HasAnt)
+                {
+                    var ant = Master.MasterAnt.CurrentAnts.FirstOrDefault(x => x.Hex == hex);
+                    if (ant != null)
+                    {
+                        _heldAnt = ant;
+                        _heldAnt.IsHeld = true;
+                    }
+                }
+            }
         }
-        else if (_selectingHex && !Input.GetMouseButtonDown(0))
+        else if (_selectingHex && Input.GetMouseButtonUp(0))
         {
             // select the hex on button release (click)
             _selectingHex = false;
-            var mousePos = Input.mousePosition;
-            mousePos.z = 10; // select distance = 10 units from the camera
-            var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
-            // xypoint are the coordinates of the hex that was clicked on. There is no bounds checking
-            var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
 
-            var hex = GetHexInfoAt(xyPoint);
+            var hex = GetHexInfoAtMouse();
             if (hex != null)
             {
                 if (SelectedHex != null)
@@ -54,13 +67,87 @@ public class HexMaster : MonoBehaviour {
                     HighlightHex(SelectedHex.Coordinates, SelectedHex.IsPathable ? DefaultColor : UnpathableColor);
                 }
                 SelectedHex = hex;
-                Debug.Log(string.Format("Selected hex at {0},{1}.",xyPoint.x, xyPoint.y));
+                Debug.Log(string.Format("Selected hex at {0},{1}.",hex.Coordinates.x, hex.Coordinates.y));
                 Debug.Log(string.Format("Home Distance: {0}", hex.HomeInfo.Distance));
                 Debug.Log(string.Format("Food Distance: {0}", hex.FoodInfo.Distance));
                 Debug.Log(string.Format("Food Scent: {0}: {1}", hex.FoodScent.Strength, hex.FoodScent.State));
                 HighlightHex(hex.Coordinates, HighlightColor);
+
+                if (_heldAnt != null)
+                {
+                    // drop ant here if possible
+
+                    if (hex.IsPathable && hex.IsEmpty)
+                    {
+                        _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y), 0F);
+
+                        // drop food at pickup location
+                        if (_heldAnt.HasFood)
+                        {
+                            if (_heldAnt.HasFood)
+                            {
+                                _heldAnt.Hex.HasPellet = true;
+                                Master.MasterFood.CurrentFood.Add(_heldAnt.Hex.Coordinates, _heldAnt.Food);
+                                _heldAnt.Food.transform.DOMove(Master.MasterHex.CalculatePosition(_heldAnt.Hex.Coordinates.x, _heldAnt.Hex.Coordinates.y), 0F);
+                                _heldAnt.HasFood = false;
+                                _heldAnt.Food = null;
+                            }
+                        }
+
+                        Master.MasterAnt.MoveAnt(_heldAnt, hex);
+                    }
+                    else
+                    {
+                        // return ant where we got it
+                        _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(_heldAnt.Hex.Coordinates.x, _heldAnt.Hex.Coordinates.y), 0F);
+                    }
+
+                    _heldAnt.IsHeld = false;
+                    _heldAnt = null;
+                }
+
+            }
+            else if (_heldAnt != null)
+            {
+                // return ant where we got it
+                _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(_heldAnt.Hex.Coordinates.x, _heldAnt.Hex.Coordinates.y), 0F);
+
+                _heldAnt.IsHeld = false;
+                _heldAnt = null;
             }
         }
+        else if (_heldAnt != null)
+        {
+            var mousePos = Input.mousePosition;
+            mousePos.z = 10; // select distance = 10 units from the camera
+            var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
+            _heldAnt.Ant.transform.DOMove(worldPoint, 0F);
+        }
+
+        if (Input.GetMouseButtonUp(1))
+        {
+            var hex = GetHexInfoAtMouse();
+            if (hex != null)
+            {
+                if (hex.IsPathable && hex.IsEmpty)
+                {
+                    Master.MasterFood.CreateFoodPellet(hex.Coordinates);
+                }
+            }
+        }
+    }
+
+    public HexInfo GetHexInfoAtMouse()
+    {
+        var mousePos = Input.mousePosition;
+        mousePos.z = 10; // select distance = 10 units from the camera
+        var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
+        // xypoint are the coordinates of the hex that was clicked on. There is no bounds checking
+        var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
+
+        var hex = GetHexInfoAt(xyPoint);
+
+        return hex;
     }
 
     /// <summary>
