@@ -17,6 +17,7 @@ public class AntMaster : MonoBehaviour {
     [SerializeField] public int Population;
     [SerializeField] int IdleOccupancy;
     [SerializeField] int RestingOccupany;
+    [SerializeField] public int HighPopulation;
 
     public int MaxAntEnergy = 1000;
 
@@ -121,10 +122,12 @@ public class AntMaster : MonoBehaviour {
     private void SpawnAnts()
     {
         // spawn ants
-        while (IdleOccupancy > 0 && ColonyEntrance.Any(x => !x.HasAnt))
+        var spawnPoint = ColonyEntrance.Where(x => x.IsEmpty).RandomElement();
+        while (IdleOccupancy > 0 && spawnPoint != null)
         {
-            CreateAntAt(ColonyEntrance.Where(x => x.IsPathable && x.IsEmpty).RandomElement().Coordinates);
+            CreateAntAt(spawnPoint.Coordinates);
             IdleOccupancy--;
+            spawnPoint = ColonyEntrance.Where(x => x.IsEmpty).RandomElement();
         }
     }
 
@@ -136,6 +139,9 @@ public class AntMaster : MonoBehaviour {
             FoodStored--;
             Population++;
             IdleOccupancy++;
+
+            if (Population > HighPopulation)
+                HighPopulation = Population;
         }
     }
 
@@ -414,7 +420,7 @@ public class AntMaster : MonoBehaviour {
         if (target == null)
             return false;
 
-        if (!target.IsPathable || !target.IsEmpty || ant.Hex == target 
+        if (!target.IsEmpty || ant.Hex == target 
             || Vector2Int.Distance(ant.Hex.Coordinates, target.Coordinates) >= 2)                     
         {
             return false;
@@ -463,7 +469,7 @@ public class AntMaster : MonoBehaviour {
 
     private bool MoveToAnyTarget(AntInfo ant, List<HexInfo> area)
     {
-        var hex = area.Where(x => x.IsPathable && x.IsEmpty).RandomElement();
+        var hex = area.Where(x => x.IsEmpty).RandomElement();
 
         return MoveToTarget(ant, hex);
     }
