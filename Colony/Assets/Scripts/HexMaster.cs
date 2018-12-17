@@ -16,6 +16,7 @@ public class HexMaster : MonoBehaviour {
     [SerializeField] GameObject HexTemplate;
     [SerializeField] public GameObject GridParent;
     [SerializeField] public Gameplay Master;
+    [SerializeField] public int RockFrequency;
     
     public List<GameObject> CurrentHexGrid;
 
@@ -64,14 +65,14 @@ public class HexMaster : MonoBehaviour {
             {
                 if (SelectedHex != null)
                 {
-                    HighlightHex(SelectedHex.Coordinates, SelectedHex.IsPathable ? DefaultColor : UnpathableColor);
+                    // HighlightHex(SelectedHex.Coordinates, SelectedHex.IsPathable ? DefaultColor : UnpathableColor);
                 }
                 SelectedHex = hex;
                 Debug.Log(string.Format("Selected hex at {0},{1}.",hex.Coordinates.x, hex.Coordinates.y));
                 Debug.Log(string.Format("Home Distance: {0}", hex.HomeInfo.Distance));
                 Debug.Log(string.Format("Food Distance: {0}", hex.FoodInfo.Distance));
                 Debug.Log(string.Format("Food Scent: {0}: {1}", hex.FoodScent.Strength, hex.FoodScent.State));
-                HighlightHex(hex.Coordinates, HighlightColor);
+                // HighlightHex(hex.Coordinates, HighlightColor);
 
                 if (_heldAnt != null)
                 {
@@ -175,7 +176,7 @@ public class HexMaster : MonoBehaviour {
 
         for (int y = 0; y < GridHeight; y++) {
             for (int x = 0; x < GridWidth; x++) {
-                if (UnityEngine.Random.Range(0, 10) == 0) {
+                if (UnityEngine.Random.Range(0, RockFrequency) == 0) {
                     // Only instantiate unpathable tiles
                     GameObject o = CreateHexAt(x, y, UnpathableColor);
                     o.GetComponent<Hex>().NeverPathable = true;

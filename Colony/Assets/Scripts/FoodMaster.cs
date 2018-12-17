@@ -10,9 +10,9 @@ public class FoodMaster : MonoBehaviour {
 
     [SerializeField] Gameplay Master;
 
-    public int MaxFood = 100;
-    public int MinFood = 50;
-    public int MinDistance = 5;
+    public int MaxFood = 125;
+    public int MinFood = 20;
+    public int MinDistance = 25;
     private int _stackScentStrength = 8;
     
     public int _pelletScentStrength = 3;
@@ -53,9 +53,14 @@ public class FoodMaster : MonoBehaviour {
 
         // spawn initial food near colony
         var spawnPoint = Master.MasterAnt.ColonyLocation;
-        spawnPoint.x -= 4;
-        spawnPoint.y -= 2;
-        CreateFoodStack(spawnPoint, MinFood);
+        spawnPoint.x -= 15;
+        spawnPoint.y -= 15;
+        if (spawnPoint.x < 0) spawnPoint.x = 0;
+        if (spawnPoint.y < 0) spawnPoint.y = 0;
+        CreateFoodStack(spawnPoint, 15);
+        spawnPoint.x += 18;
+        spawnPoint.y += 18;
+        CreateFoodStack(spawnPoint, 5);
     }
 
     public int GetTotalFood()
@@ -65,19 +70,22 @@ public class FoodMaster : MonoBehaviour {
 
     public void SpawnFood()
     {
+        
         var foodCount = GetTotalFood();
 
         if (foodCount < MinFood)
         {
+            
             var spawnPoint = Master.MasterHex.GetRandomPoint(0);
             while (Vector2Int.Distance(spawnPoint, Master.MasterAnt.ColonyLocation) < MinDistance)
             {
                 spawnPoint = Master.MasterHex.GetRandomPoint(0);
             }
-            var spawnSize = UnityEngine.Random.Range(1, MaxFood - foodCount);
+            var spawnSize = UnityEngine.Random.Range(MinFood, MaxFood);
             CreateFoodStack(spawnPoint, spawnSize);
         }
 
+        // Create pellets around current stacks
         foreach (var stack in CurrentStacks)
         {
             var stackCoords = stack.Key;
@@ -99,6 +107,7 @@ public class FoodMaster : MonoBehaviour {
             }
         }
 
+        // Destroy empty stacks
         foreach (var stack in DespawnStacks)
         {
             var stackHex = Master.MasterHex.GetHexInfoAt(stack.Coordinates);

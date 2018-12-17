@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 using TMPro;
-
+using System;
 public class Gameplay : MonoBehaviour {
 
     [SerializeField] public HexMaster MasterHex;
@@ -14,6 +14,8 @@ public class Gameplay : MonoBehaviour {
     [SerializeField] public TextMeshProUGUI TurnText;
     [SerializeField] public TextMeshProUGUI PopulationText;
     [SerializeField] public TextMeshProUGUI FoodStoredText;
+    public TextMeshProUGUI PauseButton;
+    bool _paused;
 
     public long GameTurn;
 
@@ -23,7 +25,8 @@ public class Gameplay : MonoBehaviour {
         MasterAnt.InitializeAnts();
 	    MasterFood.InitializeFood();
         TurnText.text = "Turn " + GameTurn;
-	    //StartLoop(CoreGameLoopFrequency);
+        _paused = true;
+	    PauseOrPlay();
 	}
 
     public void StartLoop(float frequency)
@@ -57,9 +60,19 @@ public class Gameplay : MonoBehaviour {
 
         //MasterHex.HighlightScents();
 
-        TurnText.text = "Turn: " + GameTurn;
-        PopulationText.text = "Ants: " + MasterAnt.CurrentAnts.Count;
+        TurnText.text = ConvertToString(GameTurn);
+        PopulationText.text = "Ants: " + MasterAnt.Population;
         FoodStoredText.text = "Food: " + MasterAnt.FoodStored;
+    }
+
+    public static string ConvertToString(long GameTurn) {
+        // gameturn = total minutes
+        // 1440 minutes per day
+        // 
+        long Day = Convert.ToInt32(Math.Floor(GameTurn / 1440m));
+        long Hour = Convert.ToInt32(Math.Floor(GameTurn / 60m) - (Day * 24m));
+        long Minute = GameTurn % 60;
+        return "Day " + (Day + 1) + " " + Hour.ToString("00") + ":" + Minute.ToString("00");
     }
 
     public void SpeedUp()
@@ -72,14 +85,22 @@ public class Gameplay : MonoBehaviour {
         StartLoop(CoreGameLoopFrequency + .1f);
     }
 
-    public void Pause()
+    public void PauseOrPlay()
     {
-        CancelInvoke();
+        if (_paused) {
+            StartLoop(CoreGameLoopFrequency);
+            PauseButton.text = "Pause";
+        }
+        else {
+            CancelInvoke();
+            PauseButton.text = "Play";
+        }
+        _paused = !_paused;
     }
 
     public void Play()
     {
-        StartLoop(CoreGameLoopFrequency);
+        
     }
 
     public void Next()
