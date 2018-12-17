@@ -146,8 +146,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 2.4748993, y: -71.29}
-  m_SizeDelta: {x: 213.05, y: 22.63}
+  m_AnchoredPosition: {x: -0.4, y: -71.29}
+  m_SizeDelta: {x: 274.3, y: 22.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6498538
 MonoBehaviour:
@@ -306,7 +306,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -219, y: -0.0025024414}
+  m_AnchoredPosition: {x: -293, y: -0.0025024414}
   m_SizeDelta: {x: 3.3, y: -0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &45352850
@@ -382,8 +382,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -56.9, y: 15.2}
-  m_SizeDelta: {x: 105.41, y: 22.48}
+  m_AnchoredPosition: {x: -68.2, y: 22.7}
+  m_SizeDelta: {x: 127.9, y: 37.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &125043325
 MonoBehaviour:
@@ -1029,9 +1029,9 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1066, y: 600}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.499
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -1438,8 +1438,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 291.3499, y: 81.615005}
-  m_SizeDelta: {x: 217.4, y: 89.4}
+  m_AnchoredPosition: {x: 387.49, y: 151}
+  m_SizeDelta: {x: 291.34, y: 89.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &484262689
 GameObject:
@@ -1717,8 +1717,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 2.4748993, y: -47.96}
-  m_SizeDelta: {x: 213.05, y: 24.03}
+  m_AnchoredPosition: {x: -0.4, y: -47.96}
+  m_SizeDelta: {x: 274.3, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &520132831
 MonoBehaviour:
@@ -1907,9 +1907,7 @@ MonoBehaviour:
     colony with their own chemtrail. Eventually routes become optimized and ants travel
     efficiently back and forth until the food supply is exhausted.
 
-    You can help the ants by pausing the game and moving them, or by right-clicking
-    to spawn a single food pellet. You can even make a trail to lead them to a food
-    cache!'
+    You can help the ants by spawning food with a right-click.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1937,7 +1935,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 10.3
+  m_fontSize: 13.1
   m_fontSizeBase: 26
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1978,12 +1976,12 @@ MonoBehaviour:
   m_margin: {x: 3, y: 3, z: 3, w: 3}
   m_textInfo:
     textComponent: {fileID: 534883169}
-    characterCount: 632
+    characterCount: 524
     spriteCount: 0
-    spaceCount: 114
-    wordCount: 115
+    spaceCount: 91
+    wordCount: 92
     linkCount: 0
-    lineCount: 15
+    lineCount: 12
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 0
@@ -2548,8 +2546,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 291.32, y: 171.67}
-  m_SizeDelta: {x: 217.35, y: 90.71}
+  m_AnchoredPosition: {x: 387.49, y: 241.055}
+  m_SizeDelta: {x: 291.35, y: 90.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &749893765
 GameObject:
@@ -2674,6 +2672,7 @@ MonoBehaviour:
   Population: 10
   IdleOccupancy: 10
   RestingOccupany: 0
+  HighPopulation: 0
   MaxAntEnergy: 1200
   ColonyLocation: {x: 0, y: 0}
   RandomColonyLocation: 1
@@ -3304,8 +3303,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -113.19, y: -49.6}
-  m_SizeDelta: {x: 129.18, y: -99.22}
+  m_AnchoredPosition: {x: -113.322, y: -49.6}
+  m_SizeDelta: {x: 128.917, y: -99.22}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1092851038
 MonoBehaviour:
@@ -3468,7 +3467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8509804, g: 0.25490198, b: 0.3647059, a: 1}
+  m_Color: {r: 0.15686275, g: 0.34901962, b: 0.20392157, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -3677,8 +3676,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 291.37, y: -78.52}
-  m_SizeDelta: {x: 217.35, y: 230.87}
+  m_AnchoredPosition: {x: 387.48993, y: -9.1349945}
+  m_SizeDelta: {x: 291.34, y: 230.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1465992172
 GameObject:
@@ -3788,8 +3787,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -113.19, y: 49.8}
-  m_SizeDelta: {x: 129.18, y: -99.22}
+  m_AnchoredPosition: {x: -113.322, y: 49.8}
+  m_SizeDelta: {x: 128.917, y: -99.22}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1468491278
 MonoBehaviour:
@@ -4092,7 +4091,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 18.3
+  m_fontSize: 20
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
