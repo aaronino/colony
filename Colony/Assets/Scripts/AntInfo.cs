@@ -14,9 +14,6 @@ public class AntInfo : MonoBehaviour
     public int MaxEnergy;
     public bool HasFood;
 
-    public ChemInfo KnownFood;
-    public ChemInfo KnownHome;
-
     // behaviors
     public bool AllowedEat;
     public bool AllowedGather;
@@ -34,8 +31,6 @@ public class AntInfo : MonoBehaviour
         LastTurn = turn;
         MaxEnergy = energy;
         Energy = energy;
-        KnownHome = new ChemInfo() {Distance = 1, Location = hex.Coordinates };
-        KnownFood = new ChemInfo() {Distance = 0, Location = hex.Coordinates};
     }
 
     public bool IsHungry

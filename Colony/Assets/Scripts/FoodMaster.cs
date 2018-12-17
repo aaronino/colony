@@ -12,34 +12,10 @@ public class FoodMaster : MonoBehaviour {
 
     public int MaxFood = 125;
     public int MinFood = 20;
+    public int MinStacks = 3;
     public int MinDistance = 25;
-    private int _stackScentStrength = 8;
-    
-    public int _pelletScentStrength = 3;
-
-    public int StackScentStrength
-    {
-        get { return _stackScentStrength;}
-        set
-        {
-            if (value >= 0 && value <= 10)
-            {
-                _stackScentStrength = value;
-            }
-        }
-    }
-
-    public int PelletScentStrength
-    {
-        get { return _pelletScentStrength;}
-        set
-        {
-            if (value >= 0 && value <= 10)
-            {
-                _pelletScentStrength = value;
-            }
-        }
-    }
+    public int StackScentStrength = 8;
+    public int PelletScentStrength = 3;
 
     internal Dictionary<Vector2Int, GameObject> CurrentFood;
     internal Dictionary<Vector2Int, FoodStackInfo> CurrentStacks;
@@ -53,14 +29,17 @@ public class FoodMaster : MonoBehaviour {
 
         // spawn initial food near colony
         var spawnPoint = Master.MasterAnt.ColonyLocation;
-        spawnPoint.x -= 15;
-        spawnPoint.y -= 15;
-        if (spawnPoint.x < 0) spawnPoint.x = 0;
-        if (spawnPoint.y < 0) spawnPoint.y = 0;
-        CreateFoodStack(spawnPoint, 15);
-        spawnPoint.x += 18;
-        spawnPoint.y += 18;
-        CreateFoodStack(spawnPoint, 5);
+        spawnPoint.x -= Master.MasterAnt.ColonyRadius + 15;
+        spawnPoint.y -= Master.MasterAnt.ColonyRadius + 15;
+        spawnPoint.Clamp(Master.MasterHex.MinPosition, Master.MasterHex.MaxPosition);
+
+        CreateFoodStack(spawnPoint, MinFood / 2);
+
+        spawnPoint.x += Master.MasterAnt.ColonyRadius + 20;
+        spawnPoint.y += Master.MasterAnt.ColonyRadius + 20;
+        spawnPoint.Clamp(Master.MasterHex.MinPosition, Master.MasterHex.MaxPosition);
+
+        CreateFoodStack(spawnPoint, MinFood / 2);
     }
 
     public int GetTotalFood()
@@ -73,16 +52,15 @@ public class FoodMaster : MonoBehaviour {
         
         var foodCount = GetTotalFood();
 
-        if (foodCount < MinFood)
+        if (foodCount < MinFood || CurrentStacks.Count < MinStacks)
         {
-            
             var spawnPoint = Master.MasterHex.GetRandomPoint(0);
             while (Vector2Int.Distance(spawnPoint, Master.MasterAnt.ColonyLocation) < MinDistance)
             {
                 spawnPoint = Master.MasterHex.GetRandomPoint(0);
             }
             var spawnSize = UnityEngine.Random.Range(MinFood, MaxFood);
-            CreateFoodStack(spawnPoint, spawnSize);
+            CreateFoodStack(spawnPoint, spawnSize > 6 ? spawnSize : 7 ); // no stack should be less than 7 size
         }
 
         // Create pellets around current stacks

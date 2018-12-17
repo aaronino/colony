@@ -1740,7 +1740,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: 'Population: 0'
+  m_text: 'Ants: 0'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1809,7 +1809,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 520132831}
-    characterCount: 13
+    characterCount: 7
     spriteCount: 0
     spaceCount: 1
     wordCount: 2
@@ -1908,7 +1908,7 @@ MonoBehaviour:
     efficiently back and forth until the food supply is exhausted.
 
     You can help the ants by pausing the game and moving them, or by right-clicking
-    to spawn a single food pellet. You can even maek a trail to lead them to a food
+    to spawn a single food pellet. You can even make a trail to lead them to a food
     cache!'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2633,6 +2633,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GridWidth: 74
   GridHeight: 65
+  MinPosition: {x: 0, y: 0}
+  MaxPosition: {x: 0, y: 0}
   TopLeftPosition: {x: -87.5, y: 48, z: 0}
   XSpacing: 1.7
   YSpacing: 1.5
@@ -2668,12 +2670,13 @@ MonoBehaviour:
     type: 3}
   Master: {fileID: 749893766}
   FoodStored: 10
-  Population: 0
-  IdleOccupancy: 0
+  Population: 10
+  IdleOccupancy: 10
   RestingOccupany: 0
-  MaxAntEnergy: 1000
+  MaxAntEnergy: 1200
   ColonyLocation: {x: 0, y: 0}
   RandomColonyLocation: 1
+  ColonyRadius: 2
   CurrentAnts: []
   DespawnAnts: []
 --- !u!114 &749893771
@@ -2693,10 +2696,12 @@ MonoBehaviour:
   FoodStackTemplate: {fileID: 1955851995163512, guid: 78c001ab1f73c91478b76c0567c14a51,
     type: 3}
   Master: {fileID: 749893766}
-  MaxFood: 100
+  MaxFood: 250
   MinFood: 50
+  MinStacks: 3
   MinDistance: 5
-  _pelletScentStrength: 3
+  StackScentStrength: 8
+  PelletScentStrength: 3
 --- !u!1 &870692156
 GameObject:
   m_ObjectHideFlags: 0

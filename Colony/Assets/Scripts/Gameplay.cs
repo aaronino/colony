@@ -42,6 +42,9 @@ public class Gameplay : MonoBehaviour {
     /// </summary>
     void CoreGameLoop()
     {
+        if (MasterAnt.FoodStored == 0 && MasterAnt.Population == 0)
+            return; // GAME OVER
+
         GameTurn++;
         
         // spawn food
@@ -61,17 +64,17 @@ public class Gameplay : MonoBehaviour {
         //MasterHex.HighlightScents();
 
         TurnText.text = ConvertToString(GameTurn);
-        PopulationText.text = "Ants: " + MasterAnt.Population;
-        FoodStoredText.text = "Food: " + MasterAnt.FoodStored;
+        PopulationText.text = string.Format("Ants: {0}", MasterAnt.Population);
+        FoodStoredText.text = string.Format("Food: {0}", MasterAnt.FoodStored);
     }
 
-    public static string ConvertToString(long GameTurn) {
+    public static string ConvertToString(long gameTurn) {
         // gameturn = total minutes
         // 1440 minutes per day
         // 
-        long Day = Convert.ToInt32(Math.Floor(GameTurn / 1440m));
-        long Hour = Convert.ToInt32(Math.Floor(GameTurn / 60m) - (Day * 24m));
-        long Minute = GameTurn % 60;
+        long Day = Convert.ToInt32(Math.Floor(gameTurn / 1440m));
+        long Hour = Convert.ToInt32(Math.Floor(gameTurn / 60m) - (Day * 24m));
+        long Minute = gameTurn % 60;
         return "Day " + (Day + 1) + " " + Hour.ToString("00") + ":" + Minute.ToString("00");
     }
 

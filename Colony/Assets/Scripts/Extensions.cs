@@ -59,4 +59,56 @@ public static class Extensions
     {
         return source.Where(x => Vector2Int.Distance(x, coords) > 1);
     }
+
+    public static string FoodDirection(this HexInfo hex)
+    {
+        if (hex.FoodInfo.Distance == 0)
+            return "?";
+
+        var direction = string.Empty;
+        if (hex.FoodInfo.Coordinates.y < hex.Coordinates.y)
+        {
+            direction += "n";
+        }
+        if (hex.FoodInfo.Coordinates.y > hex.Coordinates.y)
+        {
+            direction += "s";
+        }
+        if (hex.FoodInfo.Coordinates.x < hex.Coordinates.x)
+        {
+            direction += "w";
+        }
+        if (hex.FoodInfo.Coordinates.x > hex.Coordinates.x)
+        {
+            direction += "e";
+        }
+
+        return direction;
+    }
+
+    public static string HomeDirection(this HexInfo hex)
+    {
+        if (hex.HomeInfo.Distance == 0)
+            return "?";
+
+        var direction = string.Empty;
+        if (hex.HomeInfo.Coordinates.y < hex.Coordinates.y)
+        {
+            direction += "n";
+        }
+        if (hex.HomeInfo.Coordinates.y > hex.Coordinates.y)
+        {
+            direction += "s";
+        }
+        if (hex.HomeInfo.Coordinates.x < hex.Coordinates.x)
+        {
+            direction += "w";
+        }
+        if (hex.HomeInfo.Coordinates.x > hex.Coordinates.x)
+        {
+            direction += "e";
+        }
+
+        return direction;
+    }
 }

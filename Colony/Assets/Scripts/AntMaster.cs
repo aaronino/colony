@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Xml.Schema;
 using DG.Tweening;
 
 public class AntMaster : MonoBehaviour {
@@ -21,6 +22,7 @@ public class AntMaster : MonoBehaviour {
 
     public Vector2Int ColonyLocation;
     public bool RandomColonyLocation = true;
+    public int ColonyRadius = 2;
 
     private List<HexInfo> ColonyEntrance;
     public List<AntInfo> CurrentAnts;
@@ -47,23 +49,50 @@ public class AntMaster : MonoBehaviour {
     {
         var hillHex = Master.MasterHex.GetHexInfoAt(coords);
         
-        Master.MasterHex.ClearHex(coords);
+        Master.MasterHex.ClearHex(hillHex);
         Instantiate(AntHillCenterTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
         hillHex.IsColony = true;
 
-        var hillAdj = Master.MasterHex.GetNeighboringHexInfo(coords.x, coords.y, false);
+        var radius = 0; // radius of zero would be a single hex colony
 
-        foreach (var hex in hillAdj)
+        var range = Master.MasterHex.GetNeighboringHexInfo(coords.x, coords.y);
+
+        while (radius <= ColonyRadius)
         {
-            Master.MasterHex.ClearHex(hex.Coordinates);
-            Instantiate(AntHillTemplate, Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
-            hex.IsColony = true;
+            radius++;
+
+            foreach (var hex in range)
+            {
+                Master.MasterHex.ClearHex(hex);
+
+                if (radius <= ColonyRadius)
+                {
+                    Instantiate(AntHillTemplate,
+                        Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y),
+                        Quaternion.identity, Master.MasterHex.GridParent.transform);
+                    hex.IsColony = true;
+                }
+            }
+
+            var range2 = new List<HexInfo>();
+            foreach (var hex in range)
+            {
+                range2.AddRange(Master.MasterHex.GetNeighboringHexInfo(hex.Coordinates.x, hex.Coordinates.y)
+                    .Where(x => !x.IsColony));
+            }
+
+            range.Clear();
+            foreach (var hex2 in range2)
+            {
+                if (!range.Contains(hex2))
+                {
+                    range.Add(hex2);
+                }
+            }
         }
 
-        foreach (var hex in hillAdj)
-        {
-            ColonyEntrance.AddRange(Master.MasterHex.GetNeighboringHexInfo(hex.Coordinates.x, hex.Coordinates.y, true).Where(x => !x.IsColony));
-        }
+        // colony entrance is every hex adjacent to a colony hex
+        ColonyEntrance.AddRange(range);
     }
 
     
@@ -101,7 +130,7 @@ public class AntMaster : MonoBehaviour {
 
     private void BirthAnts()
     {
-        // birth new ants
+        // birth new ants by spending surplus food
         if (FoodStored > Population)
         {
             FoodStored--;
@@ -152,6 +181,12 @@ public class AntMaster : MonoBehaviour {
 
             readyAnts = CurrentAnts.Count(x => x.LastTurn != Master.GameTurn);
         }
+
+        foreach (var ant in CurrentAnts.Where(x => x.LastTurn != Master.GameTurn))
+        {
+            // even if an ant was unable to act they lose energy to hunger
+            ant.Energy--;
+        }
     }
 
     public void KillExhaustedAnts()
@@ -181,7 +216,7 @@ public class AntMaster : MonoBehaviour {
         var myHex = ant.Hex;
         var myLocation = myHex.Coordinates;
         var adjacentHexes = Master.MasterHex.GetNeighboringHexInfo(myLocation.x, myLocation.y, false);
-        var preferHexes = adjacentHexes.Where(x => x.IsPathable && x.Coordinates != ant.LastLocation).ToList();
+        var preferHexes = adjacentHexes.Where(x => x.IsPathable).ToList();
 
         HexInfo moveTarget = null;
 
@@ -190,10 +225,21 @@ public class AntMaster : MonoBehaviour {
         var foodHex = adjacentHexes.FirstOrDefault(x => x.HasPellet);
         if (foodHex != null)
         {
-            ant.KnownFood.Distance = 1;
-            ant.KnownFood.Location = foodHex.Coordinates;
             myHex.FoodInfo.Distance = 1;
-            myHex.FoodInfo.Location = foodHex.Coordinates;
+            myHex.FoodInfo.Coordinates = foodHex.Coordinates;
+            myHex.FoodInfo.LastUpdated = Master.GameTurn;
+        }
+        else
+        {
+            var bestFoodHex = adjacentHexes.Where(x => x.FoodInfo.Distance > 0
+                                                       && x.FoodInfo.Coordinates != myHex.Coordinates
+                                                       && (myHex.FoodInfo.Distance == 0 || myHex.FoodInfo.Distance > x.FoodInfo.Distance) )
+                .OrderBy(x => x.FoodInfo.Distance)
+                .FirstOrDefault();
+
+            myHex.FoodInfo.Distance = bestFoodHex == null ? 0 : bestFoodHex.FoodInfo.Distance + 1;
+            myHex.FoodInfo.Coordinates = bestFoodHex == null ? myHex.Coordinates : bestFoodHex.Coordinates;
+            myHex.FoodInfo.LastUpdated = Master.GameTurn;
         }
 
         // can we drop off food?
@@ -204,7 +250,27 @@ public class AntMaster : MonoBehaviour {
             ant.Food = null;
             ant.HasFood = false;
             FoodStored++;
-            ant.KnownFood.Distance = 0;
+        }
+
+        // are we standing next to the colony?
+        var homeHex = adjacentHexes.FirstOrDefault(x => x.IsColony);
+        if (homeHex != null)
+        {
+            myHex.HomeInfo.Distance = 1;
+            myHex.HomeInfo.Coordinates = homeHex.Coordinates;
+            myHex.HomeInfo.LastUpdated = Master.GameTurn;
+        }
+        else
+        {
+            var bestHomeHex = adjacentHexes.Where(x => x.HomeInfo.Distance > 0
+                                                       && x.HomeInfo.Coordinates != myHex.Coordinates
+                                                       && (myHex.HomeInfo.Distance == 0 || myHex.HomeInfo.Distance > x.HomeInfo.Distance))
+                .OrderBy(x => x.HomeInfo.Distance)
+                .FirstOrDefault();
+
+            myHex.HomeInfo.Distance = bestHomeHex == null ? 0 : bestHomeHex.HomeInfo.Distance + 1;
+            myHex.HomeInfo.Coordinates = bestHomeHex == null ? myHex.Coordinates : bestHomeHex.Coordinates;
+            myHex.HomeInfo.LastUpdated = Master.GameTurn;
         }
 
         // EAT
@@ -281,8 +347,8 @@ public class AntMaster : MonoBehaviour {
                 // move far from target
                 if (!MoveToFarTarget(ant, moveTarget))
                 {
-                    // last choice: move back
-                    MoveToLastTarget(ant);
+                    // move anywhere!
+                    MoveToAnyTarget(ant, adjacentHexes);
                 }
             }
         }
@@ -294,7 +360,7 @@ public class AntMaster : MonoBehaviour {
             return null;
 
         // prefer spaces with recent food trails
-        var nearFood = area.Where(x => x.FoodInfo.Distance > 0 && Master.GameTurn - x.FoodInfo.LastUpdated < 50)
+        var nearFood = area.Where(x => x.FoodInfo.Distance > 0)
             .OrderBy(x => x.FoodInfo.Distance).FirstOrDefault();
 
         if (nearFood != null)
@@ -349,7 +415,7 @@ public class AntMaster : MonoBehaviour {
             return false;
 
         if (!target.IsPathable || !target.IsEmpty || ant.Hex == target 
-            || Vector2Int.Distance(ant.Hex.Coordinates, target.Coordinates) > 1)
+            || Vector2Int.Distance(ant.Hex.Coordinates, target.Coordinates) >= 2)                     
         {
             return false;
         }
@@ -364,7 +430,7 @@ public class AntMaster : MonoBehaviour {
         if (target == null)
             return false;
 
-        var nearTargets = ant.Hex.AdjacentSpaces.AdjacentTo(target.Coordinates).Where(x => x != ant.LastLocation);
+        var nearTargets = ant.Hex.AdjacentSpaces.AdjacentTo(target.Coordinates);
 
         foreach (var space in nearTargets)
         {
@@ -382,7 +448,7 @@ public class AntMaster : MonoBehaviour {
         if (target == null)
             return false; 
 
-        var farTargets = target.AdjacentSpaces.NonAdjacentTo(target.Coordinates).Where(x => x != ant.LastLocation);
+        var farTargets = target.AdjacentSpaces.NonAdjacentTo(target.Coordinates);
 
         foreach (var space in farTargets)
         {
@@ -395,20 +461,11 @@ public class AntMaster : MonoBehaviour {
         return false;
     }
 
-    private bool MoveToLastTarget(AntInfo ant)
+    private bool MoveToAnyTarget(AntInfo ant, List<HexInfo> area)
     {
-        var lastTarget = ant.LastLocation;
+        var hex = area.Where(x => x.IsPathable && x.IsEmpty).RandomElement();
 
-        if (lastTarget == ant.Hex.Coordinates)
-            return false;
-        
-        var hex = Master.MasterHex.GetHexInfoAt(lastTarget);
-        if (hex == null) return false;
-
-        if (MoveToTarget(ant, hex))
-            return true;
-
-        return false;
+        return MoveToTarget(ant, hex);
     }
 
     public void MoveAnt(AntInfo ant, HexInfo hex)
@@ -434,32 +491,6 @@ public class AntMaster : MonoBehaviour {
 
         ant.Energy--; // spend energy
         ant.LastTurn = Master.GameTurn;
-
-        // ant knowledge
-
-        ant.KnownHome.Location = oldHex.Coordinates;
-        ant.KnownHome.Distance++;
-
-        if (ant.KnownFood.Distance > 0)
-        {
-            ant.KnownFood.Location = oldHex.Coordinates;
-            ant.KnownFood.Distance++;
-        }
-
-        // chem trails
-        if (hex.HomeInfo.Distance == 0 || hex.HomeInfo.Distance > ant.KnownHome.Distance)
-        {
-            hex.HomeInfo.Location = oldHex.Coordinates;
-            hex.HomeInfo.Distance = ant.KnownHome.Distance;
-            hex.HomeInfo.LastUpdated = Master.GameTurn;
-        }
-
-        if (hex.FoodInfo.Distance == 0 || hex.FoodInfo.Distance > ant.KnownFood.Distance)
-        {
-            hex.FoodInfo.Location = oldHex.Coordinates;
-            hex.FoodInfo.Distance = ant.KnownFood.Distance;
-            hex.FoodInfo.LastUpdated = Master.GameTurn;
-        }
 
         hex.LastTouched = Master.GameTurn;
     }

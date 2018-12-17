@@ -10,6 +10,8 @@ public class HexMaster : MonoBehaviour {
     
     [SerializeField] int GridWidth;
     [SerializeField] int GridHeight;
+    [SerializeField] internal Vector2Int MinPosition;
+    [SerializeField] internal Vector2Int MaxPosition;
     [SerializeField] Vector3 TopLeftPosition;
     [SerializeField] float XSpacing;
     [SerializeField] float YSpacing;
@@ -68,10 +70,10 @@ public class HexMaster : MonoBehaviour {
                     // HighlightHex(SelectedHex.Coordinates, SelectedHex.IsPathable ? DefaultColor : UnpathableColor);
                 }
                 SelectedHex = hex;
-                Debug.Log(string.Format("Selected hex at {0},{1}.",hex.Coordinates.x, hex.Coordinates.y));
-                Debug.Log(string.Format("Home Distance: {0}", hex.HomeInfo.Distance));
-                Debug.Log(string.Format("Food Distance: {0}", hex.FoodInfo.Distance));
-                Debug.Log(string.Format("Food Scent: {0}: {1}", hex.FoodScent.Strength, hex.FoodScent.State));
+                Debug.Log(string.Format("Hex ({0},{1}) Food ({2} {3}) Colony ({4} {5}) Scent ({6})"
+                    , hex.Coordinates.x, hex.Coordinates.y, hex.FoodDirection(), hex.FoodInfo.Distance
+                    ,hex.HomeDirection(), hex.HomeInfo.Distance, hex.FoodScent.Strength));
+                
                 // HighlightHex(hex.Coordinates, HighlightColor);
 
                 if (_heldAnt != null)
@@ -183,16 +185,20 @@ public class HexMaster : MonoBehaviour {
                 }
             }
         }
-    
+
+        MinPosition = Vector2Int.zero;
+        MaxPosition = new Vector2Int(GridWidth - 1, GridHeight - 1);
     }
 
-    public void ClearHex(Vector2Int coords)
+    public void ClearHex(HexInfo hexInfo)
     {
-        var hex = Master.MasterHex.GetHexAt(coords).GetComponent<Hex>();
+        var hex = Master.MasterHex.GetHexAt(hexInfo.Coordinates).GetComponent<Hex>();
+        
         if (hex.NeverPathable)
         {
             hex.NeverPathable = false;
             hex.ChangeColor(DefaultColor);
+            hexInfo.IsRock = false;
         }
     }
 

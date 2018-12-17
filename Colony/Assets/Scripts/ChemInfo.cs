@@ -7,7 +7,7 @@ using UnityEngine;
 
 public struct ChemInfo
 {
-    public Vector2Int Location;
+    public Vector2Int Coordinates;
     public int Distance;
     public long LastUpdated;
 }
