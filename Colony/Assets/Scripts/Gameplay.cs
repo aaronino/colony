@@ -64,8 +64,8 @@ public class Gameplay : MonoBehaviour {
         //MasterHex.HighlightScents();
 
         TurnText.text = ConvertToString(GameTurn);
-        PopulationText.text = string.Format("Ants: {0}", MasterAnt.Population);
-        FoodStoredText.text = string.Format("Food: {0}", MasterAnt.FoodStored);
+        PopulationText.text = string.Format("Ants: {0}  High: {1}", MasterAnt.Population, MasterAnt.HighPopulation);
+        FoodStoredText.text = string.Format("Food: {0}  Avail: {1}", MasterAnt.FoodStored, MasterFood.GetTotalFood());
     }
 
     public static string ConvertToString(long gameTurn) {

@@ -80,7 +80,7 @@ public class HexMaster : MonoBehaviour {
                 {
                     // drop ant here if possible
 
-                    if (hex.IsPathable && hex.IsEmpty)
+                    if (hex.IsEmpty)
                     {
                         _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y), 0F);
 
@@ -132,9 +132,9 @@ public class HexMaster : MonoBehaviour {
             var hex = GetHexInfoAtMouse();
             if (hex != null)
             {
-                if (hex.IsPathable && hex.IsEmpty)
+                if (hex.IsPathable)
                 {
-                    Master.MasterFood.CreateFoodPellet(hex.Coordinates);
+                    Master.MasterFood.CreateFoodStack(hex.Coordinates, 50);
                 }
             }
         }

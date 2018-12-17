@@ -58,8 +58,9 @@ public class HexInfo {
         get { return HasPellet || HasFoodStack; }
     }
 
-    public bool IsEmpty {
-        get { return !HasFood && !HasAnt && !IsColony; }
+    public bool IsEmpty
+    {
+        get { return !HasFood && !HasAnt && IsPathable; }
     }
 
     public bool IsPathable

@@ -99,9 +99,12 @@ public class FoodMaster : MonoBehaviour {
 
     public GameObject CreateFoodPellet(Vector2Int coords)
     {
-        GameObject o = Instantiate(FoodPelletTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
-
         var foodHex = Master.MasterHex.GetHexInfoAt(coords);
+
+        if (foodHex == null)
+            return null;
+
+        GameObject o = Instantiate(FoodPelletTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
         foodHex.HasPellet = true;
 
         CurrentFood.Add(coords,o);
@@ -109,19 +112,35 @@ public class FoodMaster : MonoBehaviour {
         return o;
     }
 
-    public GameObject CreateFoodStack(Vector2Int coords, int size)
+    public void CreateFoodStack(Vector2Int coords, int size)
     {
-        GameObject o = Instantiate(FoodStackTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
-
-        var stackInfo = new FoodStackInfo(coords, size, o);
-
-        CurrentStacks.Add(coords, stackInfo);
-
         var stackHex = Master.MasterHex.GetHexInfoAt(coords);
 
-        stackHex.HasFoodStack = true;
+        if (stackHex == null)
+            return;
 
-        return o;
+        if (stackHex.HasFoodStack)
+        {
+            var stackInfo = CurrentStacks[coords];
+            stackInfo.Size += size;
+        }
+        else
+        {
+            GameObject o = Instantiate(FoodStackTemplate, Master.MasterHex.CalculatePosition(coords.x, coords.y), Quaternion.identity, Master.MasterHex.GridParent.transform);
+            var stackInfo = new FoodStackInfo(coords, size, o);
+
+            if (stackHex.HasPellet)
+            {
+                var food = Master.MasterFood.CurrentFood[coords];
+                Master.MasterFood.CurrentFood.Remove(coords);
+                stackHex.HasPellet = false;
+                Destroy(food);
+                stackInfo.Size++; // give back this one pellet
+            }
+
+            CurrentStacks.Add(coords, stackInfo);
+            stackHex.HasFoodStack = true;
+        }
     }
 
 }
