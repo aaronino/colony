@@ -72,6 +72,34 @@ public class HexMaster : MonoBehaviour {
                     }
                 }
 
+                if (hex.HasFoodStack)
+                {
+                    var stack = Master.MasterFood.CurrentStacks[hex.Coordinates];
+
+                    var rend = stack.Stack.GetComponent<SpriteRenderer>();
+                    stack.ColorIndex++;
+                    if (stack.ColorIndex > 4) stack.ColorIndex = 0;
+                    switch (stack.ColorIndex)
+                    {
+                        case 1:
+                            rend.color = Color.red;
+                            break;
+                        case 2:
+                            rend.color = Color.blue;
+                            break;
+                        case 3:
+                            rend.color = Color.magenta;
+                            break;
+                        case 4:
+                            rend.color = Color.green;
+                            break;
+                        default:
+                            rend.color = Color.white;
+                            break;
+                    }
+
+                }
+
                 SelectedHex = hex;
                 Debug.Log(string.Format("Hex ({0},{1}) Food ({2} {3}) Colony ({4} {5}) Scent ({6})"
                     , hex.Coordinates.x, hex.Coordinates.y, hex.FoodDirection(), hex.FoodInfo.Distance
