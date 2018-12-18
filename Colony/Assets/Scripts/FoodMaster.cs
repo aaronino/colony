@@ -10,10 +10,10 @@ public class FoodMaster : MonoBehaviour {
 
     [SerializeField] Gameplay Master;
 
-    public int MaxFood = 1000;
+    public int MaxFood = 800;
     public int MinFood = 50;
     public int MinStacks = 3;
-    public int MinDistance = 3;
+    public int MinDistance = 25;
     public int StackScentStrength = 8;
     public int PelletScentStrength = 3;
 
@@ -30,14 +30,14 @@ public class FoodMaster : MonoBehaviour {
 
         // spawn initial food near colony
         var spawnPoint = Master.MasterAnt.ColonyLocation;
-        spawnPoint.x -= (Master.MasterAnt.ColonyRadius + MinDistance);
-        spawnPoint.y -= (Master.MasterAnt.ColonyRadius + MinDistance);
+        spawnPoint.x -= (Master.MasterAnt.ColonyRadius + 3);
+        spawnPoint.y -= (Master.MasterAnt.ColonyRadius + 3);
         spawnPoint.Clamp(Master.MasterHex.MinPosition, Master.MasterHex.MaxPosition);
 
         CreateFoodStack(spawnPoint, MinFood / 2);
 
-        spawnPoint.x = Master.MasterAnt.ColonyLocation.x + (Master.MasterAnt.ColonyRadius + MinDistance);
-        spawnPoint.y = Master.MasterAnt.ColonyLocation.y + (Master.MasterAnt.ColonyRadius + MinDistance);
+        spawnPoint.x = Master.MasterAnt.ColonyLocation.x + (Master.MasterAnt.ColonyRadius + 5);
+        spawnPoint.y = Master.MasterAnt.ColonyLocation.y + (Master.MasterAnt.ColonyRadius + 5);
         spawnPoint.Clamp(Master.MasterHex.MinPosition, Master.MasterHex.MaxPosition);
 
         CreateFoodStack(spawnPoint, MinFood / 2);

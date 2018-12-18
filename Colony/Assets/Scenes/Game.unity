@@ -2673,7 +2673,7 @@ MonoBehaviour:
   RestingOccupany: 0
   HighPopulation: 0
   MaxPopulation: 0
-  MaxAntEnergy: 1200
+  MaxAntEnergy: 1000
   ColonyLocation: {x: 0, y: 0}
   RandomColonyLocation: 1
   ColonyRadius: 2
@@ -2695,10 +2695,10 @@ MonoBehaviour:
   FoodStackTemplate: {fileID: 1955851995163512, guid: 78c001ab1f73c91478b76c0567c14a51,
     type: 3}
   Master: {fileID: 749893766}
-  MaxFood: 250
+  MaxFood: 800
   MinFood: 50
   MinStacks: 3
-  MinDistance: 5
+  MinDistance: 25
   StackScentStrength: 8
   PelletScentStrength: 3
 --- !u!1 &870692156
