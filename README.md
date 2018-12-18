@@ -1,3 +1,3 @@
 # Colony
 
-More info coming soon!
+An ant simulation written in Unity.
