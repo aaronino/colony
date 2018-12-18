@@ -18,6 +18,7 @@ public class AntMaster : MonoBehaviour {
     [SerializeField] int IdleOccupancy;
     [SerializeField] int RestingOccupany;
     [SerializeField] public int HighPopulation;
+    public int MaxPopulation;
 
     public int MaxAntEnergy = 1000;
 
@@ -27,7 +28,8 @@ public class AntMaster : MonoBehaviour {
 
     private List<HexInfo> ColonyEntrance;
     public List<AntInfo> CurrentAnts;
-    public List<AntInfo> DespawnAnts;
+    List<AntInfo> InsideAnts;
+    List<AntInfo> DespawnAnts;
 
     public GameObject CreateAntAt(Vector2Int coords)
     {
@@ -35,7 +37,7 @@ public class AntMaster : MonoBehaviour {
         int y = coords.y;
 
         GameObject o = Instantiate(AntTemplate, Master.MasterHex.CalculatePosition(x, y), Quaternion.identity, Master.MasterHex.GridParent.transform);
-        AntInfo ant = o.GetComponent<AntInfo>();
+        var ant = o.GetComponent<AntInfo>();
 
         HexInfo hex = Master.MasterHex.GetHexInfoAt(coords);
         ant.InitializeAnt(o, hex, Master.GameTurn, MaxAntEnergy);
@@ -44,6 +46,19 @@ public class AntMaster : MonoBehaviour {
         var antHex = Master.MasterHex.GetHexInfoAt(coords);
         MoveAnt(ant, antHex);
         return o;
+    }
+
+    public GameObject RespawnAntAt(AntInfo ant, Vector2Int coords)
+    {
+        ant.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(coords.x, coords.y), 0F);
+
+        HexInfo hex = Master.MasterHex.GetHexInfoAt(coords);
+        ant.InitializeAnt(ant.Ant, hex, Master.GameTurn, MaxAntEnergy);
+        CurrentAnts.Add(ant);
+
+        var antHex = Master.MasterHex.GetHexInfoAt(coords);
+        MoveAnt(ant, antHex);
+        return ant.Ant;
     }
 
     public void CreateAntHillAt(Vector2Int coords)
@@ -75,6 +90,11 @@ public class AntMaster : MonoBehaviour {
                 }
             }
 
+            if (radius > ColonyRadius)
+            {
+                break;
+            }
+
             var range2 = new List<HexInfo>();
             foreach (var hex in range)
             {
@@ -101,6 +121,7 @@ public class AntMaster : MonoBehaviour {
     public void InitializeAnts()
     {
         CurrentAnts = new List<AntInfo>();
+        InsideAnts = new List<AntInfo>();
         DespawnAnts = new List<AntInfo>();
         ColonyEntrance = new List<HexInfo>();
 
@@ -125,7 +146,19 @@ public class AntMaster : MonoBehaviour {
         var spawnPoint = ColonyEntrance.Where(x => x.IsEmpty).RandomElement();
         while (IdleOccupancy > 0 && spawnPoint != null)
         {
-            CreateAntAt(spawnPoint.Coordinates);
+            var insideAnt = InsideAnts.LastOrDefault();
+
+            if (insideAnt != null)
+            {
+                insideAnt.Ant.SetActive(true);
+                InsideAnts.Remove(insideAnt);
+                RespawnAntAt(insideAnt, spawnPoint.Coordinates);
+            }
+            else
+            {
+                CreateAntAt(spawnPoint.Coordinates);
+            }
+            
             IdleOccupancy--;
             spawnPoint = ColonyEntrance.Where(x => x.IsEmpty).RandomElement();
         }
@@ -134,7 +167,7 @@ public class AntMaster : MonoBehaviour {
     private void BirthAnts()
     {
         // birth new ants by spending surplus food
-        if (FoodStored > Population)
+        if (FoodStored > Population && (MaxPopulation == 0 || Population < MaxPopulation))
         {
             FoodStored--;
             Population++;
@@ -178,10 +211,12 @@ public class AntMaster : MonoBehaviour {
 
             foreach (var ant in DespawnAnts)
             {
-                Destroy(ant.Ant);
+                //Destroy(ant.Ant);
                 CurrentAnts.Remove(ant);
+                InsideAnts.Add(ant);
                 var hex = ant.Hex;
                 hex.HasAnt = false;
+                ant.Ant.SetActive(false);
             }
             DespawnAnts.Clear();
 
@@ -201,24 +236,25 @@ public class AntMaster : MonoBehaviour {
 
         foreach (var ant in exhaustedAnts)
         {
-            Destroy(ant.Ant);
             CurrentAnts.Remove(ant);
             var hex = ant.Hex;
             hex.HasAnt = false;
             if (ant.HasFood)
             {
                 hex.HasPellet = true;
+                if (Master.MasterFood.CurrentFood.ContainsKey(hex.Coordinates))
+                {
+
+                }
                 Master.MasterFood.CurrentFood.Add(hex.Coordinates, ant.Food);
             }
             Population--;
+            Destroy(ant.Ant);
         }
     }
 
     private void AntAct(AntInfo ant)
     {
-        if (ant.IsHeld)
-            return;
-
         var myHex = ant.Hex;
         var myLocation = myHex.Coordinates;
         var adjacentHexes = Master.MasterHex.GetNeighboringHexInfo(myLocation.x, myLocation.y, false);
@@ -239,6 +275,7 @@ public class AntMaster : MonoBehaviour {
         {
             var bestFoodHex = adjacentHexes.Where(x => x.FoodInfo.Distance > 0
                                                        && x.FoodInfo.Coordinates != myHex.Coordinates
+                                                       && x.FoodInfo.Coordinates != ant.LastLocation
                                                        && (myHex.FoodInfo.Distance == 0 || myHex.FoodInfo.Distance > x.FoodInfo.Distance) )
                 .OrderBy(x => x.FoodInfo.Distance)
                 .FirstOrDefault();
@@ -270,6 +307,7 @@ public class AntMaster : MonoBehaviour {
         {
             var bestHomeHex = adjacentHexes.Where(x => x.HomeInfo.Distance > 0
                                                        && x.HomeInfo.Coordinates != myHex.Coordinates
+                                                       && x.HomeInfo.Coordinates != ant.LastLocation
                                                        && (myHex.HomeInfo.Distance == 0 || myHex.HomeInfo.Distance > x.HomeInfo.Distance))
                 .OrderBy(x => x.HomeInfo.Distance)
                 .FirstOrDefault();
@@ -473,7 +511,7 @@ public class AntMaster : MonoBehaviour {
 
         return MoveToTarget(ant, hex);
     }
-
+  
     public void MoveAnt(AntInfo ant, HexInfo hex)
     {
         var oldHex = ant.Hex;

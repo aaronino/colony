@@ -13,12 +13,12 @@ public class AntInfo : MonoBehaviour
     public int Energy;
     public int MaxEnergy;
     public bool HasFood;
+    public short ColorIndex;
 
     // behaviors
     public bool AllowedEat;
     public bool AllowedGather;
     public bool AllowedExplore;
-    public bool IsHeld;
 
     public void InitializeAnt(GameObject ant, HexInfo hex, long turn, int energy)
     {
@@ -31,6 +31,26 @@ public class AntInfo : MonoBehaviour
         LastTurn = turn;
         MaxEnergy = energy;
         Energy = energy;
+
+        var rend = ant.GetComponent<SpriteRenderer>();
+        switch (ColorIndex)
+        {
+            case 1:
+                rend.color = Color.red;
+                break;
+            case 2:
+                rend.color = Color.blue;
+                break;
+            case 3:
+                rend.color = Color.magenta;
+                break;
+            case 4:
+                rend.color = Color.green;
+                break;
+            default:
+                rend.color = Color.black;
+                break;
+        }
     }
 
     public bool IsHungry

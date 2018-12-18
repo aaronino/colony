@@ -306,7 +306,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -293, y: -0.0025024414}
+  m_AnchoredPosition: {x: -293, y: -0.0024414062}
   m_SizeDelta: {x: 3.3, y: -0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &45352850
@@ -382,7 +382,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -68.2, y: 22.7}
+  m_AnchoredPosition: {x: -68.19995, y: 22.699951}
   m_SizeDelta: {x: 127.9, y: 37.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &125043325
@@ -2643,7 +2643,6 @@ MonoBehaviour:
   Master: {fileID: 749893766}
   RockFrequency: 35
   CurrentHexGrid: []
-  _selectingHex: 0
   UnpathableColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   DefaultColor: {r: 0.9490196, g: 0.81960785, b: 0.5803922, a: 1}
   HighlightColor: {r: 0.94294393, g: 0.9716981, b: 0.9212798, a: 1}
@@ -2673,12 +2672,12 @@ MonoBehaviour:
   IdleOccupancy: 10
   RestingOccupany: 0
   HighPopulation: 0
+  MaxPopulation: 0
   MaxAntEnergy: 1200
   ColonyLocation: {x: 0, y: 0}
   RandomColonyLocation: 1
   ColonyRadius: 2
   CurrentAnts: []
-  DespawnAnts: []
 --- !u!114 &749893771
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2691,7 +2690,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a34e81bd12e50634482e956788a191a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FoodPelletTemplate: {fileID: 1955851995163512, guid: 1511287190dd952428092f7c4afba4bb,
+  FoodPelletTemplate: {fileID: 1955851995163512, guid: 1c49e172fc8127b4b88984b358cee7ff,
     type: 3}
   FoodStackTemplate: {fileID: 1955851995163512, guid: 78c001ab1f73c91478b76c0567c14a51,
     type: 3}

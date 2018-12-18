@@ -24,7 +24,7 @@ public class HexMaster : MonoBehaviour {
 
     public Dictionary<Vector2Int, HexInfo> HexDataDictionary;
     private List<HexInfo> _scentedHexes;
-    public bool _selectingHex;
+    
     public HexInfo SelectedHex;
 
     // temp color helpers
@@ -34,99 +34,52 @@ public class HexMaster : MonoBehaviour {
     public GameObject TextX;
     public GameObject TextY;
 
-    private AntInfo _heldAnt;
-
     public void Update()
     {
-        if (!_selectingHex && Input.GetMouseButtonDown(0))
+        // left-click: change ant color / get info
+        if (Input.GetMouseButtonDown(0))
         {
-            _selectingHex = true;
+            var hex = GetHexInfoAtMouse();
 
-            if (_heldAnt == null)
+            if (hex != null)
             {
-                var hex = GetHexInfoAtMouse();
-
-                if (hex != null && hex.HasAnt)
+                if (hex.HasAnt)
                 {
                     var ant = Master.MasterAnt.CurrentAnts.FirstOrDefault(x => x.Hex == hex);
                     if (ant != null)
                     {
-                        _heldAnt = ant;
-                        _heldAnt.IsHeld = true;
+                        var rend = ant.Ant.GetComponent<SpriteRenderer>();
+                        ant.ColorIndex++;
+                        if (ant.ColorIndex > 4) ant.ColorIndex = 0;
+                        switch (ant.ColorIndex)
+                        {
+                            case 1:
+                                rend.color = Color.red;
+                                break;
+                            case 2:
+                                rend.color = Color.blue;
+                                break;
+                            case 3:
+                                rend.color = Color.magenta;
+                                break;
+                            case 4:
+                                rend.color = Color.green;
+                                break;
+                            default:
+                                rend.color = Color.black;
+                                break;
+                        }
                     }
                 }
-            }
-        }
-        else if (_selectingHex && Input.GetMouseButtonUp(0))
-        {
-            // select the hex on button release (click)
-            _selectingHex = false;
 
-            var hex = GetHexInfoAtMouse();
-            if (hex != null)
-            {
-                if (SelectedHex != null)
-                {
-                    // HighlightHex(SelectedHex.Coordinates, SelectedHex.IsPathable ? DefaultColor : UnpathableColor);
-                }
                 SelectedHex = hex;
                 Debug.Log(string.Format("Hex ({0},{1}) Food ({2} {3}) Colony ({4} {5}) Scent ({6})"
                     , hex.Coordinates.x, hex.Coordinates.y, hex.FoodDirection(), hex.FoodInfo.Distance
-                    ,hex.HomeDirection(), hex.HomeInfo.Distance, hex.FoodScent.Strength));
-                
-                // HighlightHex(hex.Coordinates, HighlightColor);
-
-                if (_heldAnt != null)
-                {
-                    // drop ant here if possible
-
-                    if (hex.IsEmpty)
-                    {
-                        _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(hex.Coordinates.x, hex.Coordinates.y), 0F);
-
-                        // drop food at pickup location
-                        if (_heldAnt.HasFood)
-                        {
-                            if (_heldAnt.HasFood)
-                            {
-                                _heldAnt.Hex.HasPellet = true;
-                                Master.MasterFood.CurrentFood.Add(_heldAnt.Hex.Coordinates, _heldAnt.Food);
-                                _heldAnt.Food.transform.DOMove(Master.MasterHex.CalculatePosition(_heldAnt.Hex.Coordinates.x, _heldAnt.Hex.Coordinates.y), 0F);
-                                _heldAnt.HasFood = false;
-                                _heldAnt.Food = null;
-                            }
-                        }
-
-                        Master.MasterAnt.MoveAnt(_heldAnt, hex);
-                    }
-                    else
-                    {
-                        // return ant where we got it
-                        _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(_heldAnt.Hex.Coordinates.x, _heldAnt.Hex.Coordinates.y), 0F);
-                    }
-
-                    _heldAnt.IsHeld = false;
-                    _heldAnt = null;
-                }
-
-            }
-            else if (_heldAnt != null)
-            {
-                // return ant where we got it
-                _heldAnt.Ant.transform.DOMove(Master.MasterHex.CalculatePosition(_heldAnt.Hex.Coordinates.x, _heldAnt.Hex.Coordinates.y), 0F);
-
-                _heldAnt.IsHeld = false;
-                _heldAnt = null;
+                    , hex.HomeDirection(), hex.HomeInfo.Distance, hex.FoodScent.Strength));
             }
         }
-        else if (_heldAnt != null)
-        {
-            var mousePos = Input.mousePosition;
-            mousePos.z = 10; // select distance = 10 units from the camera
-            var worldPoint = Master.MainCamera.ScreenToWorldPoint(mousePos);
-            _heldAnt.Ant.transform.DOMove(worldPoint, 0F);
-        }
 
+        // right-click: spawn a food stack
         if (Input.GetMouseButtonUp(1))
         {
             var hex = GetHexInfoAtMouse();
