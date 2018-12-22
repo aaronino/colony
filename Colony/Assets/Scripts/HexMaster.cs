@@ -31,6 +31,7 @@ public class HexMaster : MonoBehaviour {
     [SerializeField] public Color UnpathableColor;
     [SerializeField] public Color DefaultColor;
     [SerializeField] public Color HighlightColor;
+    private Color NoColor = new Color(0, 0, 0, 0);
     public GameObject TextX;
     public GameObject TextY;
 
@@ -129,7 +130,7 @@ public class HexMaster : MonoBehaviour {
         // xypoint are the coordinates of the hex that was clicked on. There is no bounds checking
         var xyPoint = ConvertXYToCoordinates(worldPoint.x - TopLeftPosition.x, worldPoint.y - TopLeftPosition.y);
 
-        var hex = GetHexInfoAt(xyPoint);
+        var hex = GetHexInfoAt(xyPoint, true);
 
         return hex;
     }
@@ -351,13 +352,18 @@ public class HexMaster : MonoBehaviour {
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    private GameObject GetHexAt(Vector2Int coords)
+    private GameObject GetHexAt(Vector2Int coords, bool noColor = false)
     {
+        Color c = noColor ? NoColor : DefaultColor;
         // Note - change the createhexat color value to see which hexes are created as a result of ants wandering. interesting!
         return CurrentHexGrid
                    .FirstOrDefault(o => (o.GetComponent<Hex>().Row == coords.y) 
                    && (o.GetComponent<Hex>().Column == coords.x)) 
-                   ?? CreateHexAt(coords.x, coords.y, DefaultColor);   
+                   ?? CreateHexAt(coords.x, coords.y, c);   
+    }
+
+    public HexInfo GetHexInfoAt(Vector2Int coords) {
+        return GetHexInfoAt(coords, false);
     }
 
     /// <summary>
@@ -365,7 +371,7 @@ public class HexMaster : MonoBehaviour {
     /// </summary>
     /// <param name="coords"></param>
     /// <returns></returns>
-    public HexInfo GetHexInfoAt(Vector2Int coords)
+    public HexInfo GetHexInfoAt(Vector2Int coords, bool noColor)
     {
         // bounds check
         if (coords.x < 0 || coords.x >= GridWidth)
@@ -380,7 +386,7 @@ public class HexMaster : MonoBehaviour {
             return info;
         }
 
-        var hex = GetHexAt(coords);
+        var hex = GetHexAt(coords, noColor);
 
         if (hex == null)
             return null;
